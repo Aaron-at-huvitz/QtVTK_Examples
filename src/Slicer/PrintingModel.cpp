@@ -31,61 +31,80 @@ void PrintingModel::LoadModel(const QString& fileName)
     reader->SetFileName(fileName.toStdString().c_str());
     reader->Update();
 
-    modelData = vtkPolyData::New();
-    modelData->DeepCopy(reader->GetOutput());
+    rawModelData = vtkPolyData::New();
+    rawModelData->DeepCopy(reader->GetOutput());
 
     auto longestEdgeLength = GetLongestEdgeLength();
     cout << "longestEdgeLength : " << longestEdgeLength << endl;
 
-    modelMapper = vtkPolyDataMapper::New();
-    modelMapper->SetInputConnection(reader->GetOutputPort());
+    rawModelMapper = vtkPolyDataMapper::New();
+    rawModelMapper->SetInputConnection(reader->GetOutputPort());
 
-    modelActor = vtkActor::New();
-    modelActor->SetMapper(modelMapper);
+    rawModelActor = vtkActor::New();
+    rawModelActor->SetMapper(rawModelMapper);
 
     reader->Delete();
 }
 
 void PrintingModel::Clear()
 {
-    if (nullptr != modelData)
+    if (nullptr != rawModelData)
     {
-        modelData->Delete();
-        modelData = nullptr;
+        rawModelData->Delete();
+        rawModelData = nullptr;
     }
 
-    if (nullptr != modelMapper)
+    if (nullptr != remeshedModelData)
     {
-        modelMapper->Delete();
-        modelMapper = nullptr;
+        remeshedModelData->Delete();
+        remeshedModelData = nullptr;
     }
 
-    if (nullptr != modelActor)
+    if (nullptr != rawModelMapper)
     {
-        renderer->RemoveActor(modelActor);
-        modelActor->Delete();
-        modelActor = nullptr;
+        rawModelMapper->Delete();
+        rawModelMapper = nullptr;
+    }
+
+    if (nullptr != remeshedModelMapper)
+    {
+        remeshedModelMapper->Delete();
+        remeshedModelMapper = nullptr;
+    }
+
+    if (nullptr != rawModelActor)
+    {
+        renderer->RemoveActor(rawModelActor);
+        rawModelActor->Delete();
+        rawModelActor = nullptr;
+    }
+
+    if (nullptr != remeshedModelActor)
+    {
+        renderer->RemoveActor(remeshedModelActor);
+        remeshedModelActor->Delete();
+        remeshedModelActor = nullptr;
     }
 }
 
 double PrintingModel::GetLongestEdgeLength()
 {
-    if (nullptr != modelData)
+    if (nullptr != rawModelData)
     {
         double edgeLength = 0.0;
 
-        auto numberOfPolys = modelData->GetNumberOfCells();
+        auto numberOfPolys = rawModelData->GetNumberOfCells();
         for (size_t i = 0; i < numberOfPolys; i++)
         {
-            auto cell = modelData->GetCell(i);
+            auto cell = rawModelData->GetCell(i);
             auto pi0 = cell->GetPointId(0);
             auto pi1 = cell->GetPointId(1);
             auto pi2 = cell->GetPointId(2);
 
             double p0[3], p1[3], p2[3];
-            modelData->GetPoint(pi0, p0);
-            modelData->GetPoint(pi1, p1);
-            modelData->GetPoint(pi2, p2);
+            rawModelData->GetPoint(pi0, p0);
+            rawModelData->GetPoint(pi1, p1);
+            rawModelData->GetPoint(pi2, p2);
 
             auto ll0 = vtkMath::Distance2BetweenPoints(p0, p1);
             auto ll1 = vtkMath::Distance2BetweenPoints(p1, p2);
@@ -100,4 +119,9 @@ double PrintingModel::GetLongestEdgeLength()
     }
 
     return -1.0;
+}
+
+void PrintingModel::Remesh(double edgeLength)
+{
+
 }

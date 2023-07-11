@@ -130,7 +130,7 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
     printingModel = new PrintingModel(renderer);
     printingModel->LoadModel(fileName);
 
-    renderer->AddActor(printingModel->GetModelActor());
+    renderer->AddActor(printingModel->GetRawModelActor());
     renderer->ResetCamera();
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
 }

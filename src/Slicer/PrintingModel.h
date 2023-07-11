@@ -12,14 +12,19 @@ public:
 	void Clear();
 
 	double GetLongestEdgeLength();
+	void Remesh(double edgeLength);
 
-	inline vtkPolyData* GetModelData() const { return modelData; }
-	inline vtkPolyDataMapper* GetModelMapper() const { return modelMapper; }
-	inline vtkActor* GetModelActor() const { return modelActor; }
+	inline vtkPolyData* GetRawModelData() const { return rawModelData; }
+	inline vtkPolyData* GetRemeshedModelData() const { return remeshedModelData; }
+	inline vtkPolyDataMapper* GetRawModelMapper() const { return rawModelMapper; }
+	inline vtkActor* GetRawModelActor() const { return rawModelActor; }
 
 protected:
 	vtkRenderer* renderer = nullptr;
-	vtkPolyData* modelData = nullptr;
-	vtkPolyDataMapper* modelMapper = nullptr;
-	vtkActor* modelActor = nullptr;
+	vtkPolyData* rawModelData = nullptr;
+	vtkPolyData* remeshedModelData = nullptr;
+	vtkPolyDataMapper* rawModelMapper = nullptr;
+	vtkPolyDataMapper* remeshedModelMapper = nullptr;
+	vtkActor* rawModelActor = nullptr;
+	vtkActor* remeshedModelActor = nullptr;
 };

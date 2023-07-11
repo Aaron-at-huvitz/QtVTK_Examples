@@ -22,3 +22,4 @@
 #include <vtkVectorText.h>
 #include <vtkLinearExtrusionFilter.h>
 #include <vtkContourFilter.h>
+#include <vtkAdaptiveSubdivisionFilter.h>
