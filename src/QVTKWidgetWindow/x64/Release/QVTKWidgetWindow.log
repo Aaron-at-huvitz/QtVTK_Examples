@@ -1,0 +1,8 @@
+﻿  Reading Qt configuration (C:/Qt/Qt-6.5.1/bin/qmake)
+  QVTKWidget.cpp
+  QVTKWidgetWindow.cpp
+  main.cpp
+  qrc_QVTKWidgetWindow.cpp
+  moc_QVTKWidgetWindow.cpp
+  moc_QVTKWidget.cpp
+  QVTKWidgetWindow.vcxproj -> C:\Workspace\CPP\QtVTK_Examples\bin\Release\QVTKWidgetWindow.exe
