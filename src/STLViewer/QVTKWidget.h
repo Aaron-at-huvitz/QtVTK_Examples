@@ -1,8 +1,6 @@
 #pragma once
 
-#include <QTimer>
-#include <QWidget>
-#include <QVTKOpenGLNativeWidget.h>
+#include "Qt_header_files.h"
 
 class QVTKWidget :
     public QWidget

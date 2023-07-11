@@ -52,7 +52,7 @@ QVTKWidgetWindow::QVTKWidgetWindow(QWidget *parent)
     vtkNew<vtkRenderer> renderer;
     renderer->AddActor(coneActor);
     renderer->AddActor(cubeActor);
-    renderer->SetBackground(colors->GetColor3d("LightSteelBlue").GetData());
+    renderer->SetBackground(0.3, 0.5, 0.7);
 
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->AddRenderer(renderer);
     renderer->ResetCamera();

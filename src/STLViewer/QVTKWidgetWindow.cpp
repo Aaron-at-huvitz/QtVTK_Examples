@@ -1,62 +1,130 @@
 #include "QVTKWidgetWindow.h"
 #include "QVTKWidget.h"
 
-#include <vtkCamera.h>
-#include <vtkCommand.h>
-#include <vtkConeSource.h>
-#include <vtkCubeSource.h>
-#include <vtkDataObjectToTable.h>
-#include <vtkElevationFilter.h>
-#include <vtkGenericOpenGLRenderWindow.h>
-#include <vtkNamedColors.h>
-#include <vtkNew.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkProperty.h>
-#include <vtkQtTableView.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderer.h>
-#include <vtkVersion.h>
-
 QVTKWidgetWindow::QVTKWidgetWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
 
-    vtkNew<vtkNamedColors> colors;
+    this->setWindowTitle("STL Viewer");
+    this->showMaximized();
 
-    vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
+    InitializeMenuBar();
 
-    ui.vtkWidget->GetVTKOpenGLNativeWidget()->setRenderWindow(renderWindow);
-
-    // Cone
-    vtkNew<vtkConeSource> coneSource;
-    coneSource->SetDirection(0.0, 1.0, 0.0);
-    vtkNew<vtkPolyDataMapper> coneMapper;
-    coneMapper->SetInputConnection(coneSource->GetOutputPort());
-    vtkNew<vtkActor> coneActor;
-    coneActor->SetMapper(coneMapper);
-    coneActor->GetProperty()->SetColor(colors->GetColor4d("Tomato").GetData());
-
-    // Cube
-    vtkNew<vtkCubeSource> cubeSource;
-    cubeSource->SetXLength(0.8);
-    cubeSource->SetYLength(0.8);
-    cubeSource->SetZLength(0.8);
-    vtkNew<vtkPolyDataMapper> cubeMapper;
-    cubeMapper->SetInputConnection(cubeSource->GetOutputPort());
-    vtkNew<vtkActor> cubeActor;
-    cubeActor->SetMapper(cubeMapper);
-    cubeActor->GetProperty()->SetColor(
-        colors->GetColor4d("MediumSeaGreen").GetData());
-
-    vtkNew<vtkRenderer> renderer;
-    renderer->AddActor(coneActor);
-    renderer->AddActor(cubeActor);
-    renderer->SetBackground(colors->GetColor3d("LightSteelBlue").GetData());
-
-    ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->AddRenderer(renderer);
-    renderer->ResetCamera();
+    InitializeVTK();
 }
 
 QVTKWidgetWindow::~QVTKWidgetWindow()
-{}
+{
+}
+
+void QVTKWidgetWindow::InitializeVTK()
+{
+    vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
+    vtkNew<vtkRenderer> renderer;
+    renderer->SetBackground(0.3, 0.5, 0.7);
+
+    ui.vtkWidget->GetVTKOpenGLNativeWidget()->setRenderWindow(renderWindow);
+    ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->AddRenderer(renderer);
+
+
+
+
+    vtkNew<vtkVectorText> textSource;
+    textSource->SetText("Slicer");
+
+    vtkNew<vtkLinearExtrusionFilter> extrudeFilter;
+    extrudeFilter->SetInputConnection(textSource->GetOutputPort());
+    extrudeFilter->SetExtrusionTypeToVectorExtrusion();
+    extrudeFilter->SetVector(0, 0, 1);
+    extrudeFilter->SetScaleFactor(0.5);
+    extrudeFilter->CappingOn();
+
+    //vtkNew<vtkContourFilter> contourFilter;
+    //contourFilter->SetInputData(extrudeFilter->GetOutput());
+    //contourFilter->GenerateValues(1, 0.0, 0.0);
+
+    vtkNew<vtkPolyDataMapper> textMapper;
+    textMapper->SetInputConnection(textSource->GetOutputPort());
+
+    vtkNew<vtkPolyDataMapper> extrudeMapper;
+    extrudeMapper->SetInputConnection(extrudeFilter->GetOutputPort());
+
+    //vtkNew<vtkPolyDataMapper> contourMapper;
+    //contourMapper->SetInputConnection(contourFilter->GetOutputPort());
+
+    vtkNew<vtkActor> textActor;
+    textActor->SetMapper(textMapper);
+
+    vtkNew<vtkActor> extrudeActor;
+    extrudeActor->SetMapper(extrudeMapper);
+
+    //vtkNew<vtkActor> contourActor;
+    //contourActor->SetMapper(contourMapper);
+    //contourActor->GetProperty()->SetColor(1.0, 0.0, 0.0);
+
+    renderer->AddActor(textActor);
+    renderer->AddActor(extrudeActor);
+    //renderer->AddActor(contourActor);
+
+    renderer->ResetCamera();
+}
+
+void QVTKWidgetWindow::InitializeMenuBar()
+{
+    auto fileMenu = ui.menuBar->addMenu("File (&F)");
+
+    fileMenu->addAction("Open (&O)", this, SLOT(OnMenuActionOpen()));
+}
+
+void QVTKWidgetWindow::OnMenuActionOpen()
+{
+    auto fileName = QFileDialog::getOpenFileName(this, "Open File", "C:/Resources/3D/STL", "Supported Mesh Files (*.stl *.obj *.ply);;STL Files (*.stl);;Obj Files (*.obj);;PLY Files (*.ply)");
+    if (false == fileName.isEmpty())
+    {
+        LoadModel(fileName);
+    }
+}
+
+
+void QVTKWidgetWindow::LoadModel(const QString& fileName)
+{
+    auto extension = fileName.last(3).toLower();
+
+    vtkAbstractPolyDataReader* reader = nullptr;
+    if ("stl" == extension)
+    {
+        reader = vtkSTLReader::New();
+    }
+    else if ("obj" == extension)
+    {
+        reader = vtkOBJReader::New();
+    }
+    else if ("ply" == extension)
+    {
+        reader = vtkPLYReader::New();
+    }
+
+    reader->SetFileName(fileName.toStdString().c_str());
+    reader->Update();
+
+    vtkNew<vtkPolyDataMapper> mapper;
+    mapper->SetInputConnection(reader->GetOutputPort());
+
+    vtkNew<vtkActor> actor;
+    actor->SetMapper(mapper);
+
+    auto renderers = ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->GetRenderers();
+    auto renderer = renderers->GetFirstRenderer();
+    while (nullptr != renderer) {
+        renderer->RemoveAllViewProps();
+        renderer = renderers->GetNextItem();
+    }
+    renderer = renderers->GetFirstRenderer();
+
+    renderer->AddActor(actor);
+    renderer->ResetCamera();
+    ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+
+    reader->Delete();
+}

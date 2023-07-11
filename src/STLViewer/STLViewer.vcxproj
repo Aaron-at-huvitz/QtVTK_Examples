@@ -113,6 +113,10 @@
   <ItemGroup>
     <QtMoc Include="QVTKWidget.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Qt_header_files.h" />
+    <ClInclude Include="vtk_header_files.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
     <Import Project="$(QtMsBuild)\qt.targets" />
