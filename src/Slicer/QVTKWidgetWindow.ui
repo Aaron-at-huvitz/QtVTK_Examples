@@ -18,6 +18,27 @@
     <item>
      <widget class="QVTKWidget" name="vtkWidget" native="true"/>
     </item>
+    <item>
+     <widget class="QSlider" name="verticalSlider_1">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QSlider" name="verticalSlider_2">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QSlider" name="verticalSlider_3">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">

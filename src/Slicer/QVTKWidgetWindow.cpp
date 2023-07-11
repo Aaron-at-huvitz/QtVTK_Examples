@@ -1,5 +1,6 @@
 #include "QVTKWidgetWindow.h"
 #include "QVTKWidget.h"
+#include "PrintingModel.h"
 
 QVTKWidgetWindow::QVTKWidgetWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -10,6 +11,7 @@ QVTKWidgetWindow::QVTKWidgetWindow(QWidget *parent)
     this->showMaximized();
 
     InitializeMenuBar();
+    InitializeSliders();
 
     InitializeVTK();
 }
@@ -77,6 +79,13 @@ void QVTKWidgetWindow::InitializeMenuBar()
     fileMenu->addAction("Open (&O)", this, SLOT(OnMenuActionOpen()));
 }
 
+void QVTKWidgetWindow::InitializeSliders()
+{
+    connect(ui.verticalSlider_1, SIGNAL(valueChanged(int)), this, SLOT(OnSlider1ValueChaned(int)));
+    connect(ui.verticalSlider_2, SIGNAL(valueChanged(int)), this, SLOT(OnSlider1ValueChaned(int)));
+    connect(ui.verticalSlider_3, SIGNAL(valueChanged(int)), this, SLOT(OnSlider1ValueChaned(int)));
+}
+
 void QVTKWidgetWindow::OnMenuActionOpen()
 {
     auto fileName = QFileDialog::getOpenFileName(this, "Open File", "C:/Resources/3D/STL", "Supported Mesh Files (*.stl *.obj *.ply);;STL Files (*.stl);;Obj Files (*.obj);;PLY Files (*.ply)");
@@ -86,32 +95,29 @@ void QVTKWidgetWindow::OnMenuActionOpen()
     }
 }
 
+void QVTKWidgetWindow::OnSlider1ValueChaned(int value)
+{
+    cout << "slider1 : " << value << endl;
+}
+
+void QVTKWidgetWindow::OnSlider2ValueChaned(int value)
+{
+    cout << "slider2 : " << value << endl;
+}
+
+void QVTKWidgetWindow::OnSlider3ValueChaned(int value)
+{
+    cout << "slider3 : " << value << endl;
+}
+
+
 void QVTKWidgetWindow::LoadModel(const QString& fileName)
 {
-    auto extension = fileName.last(3).toLower();
-
-    vtkAbstractPolyDataReader* reader = nullptr;
-    if ("stl" == extension)
+    if (nullptr != printingModel)
     {
-        reader = vtkSTLReader::New();
+        delete printingModel;
+        printingModel = nullptr;
     }
-    else if ("obj" == extension)
-    {
-        reader = vtkOBJReader::New();
-    }
-    else if ("ply" == extension)
-    {
-        reader = vtkPLYReader::New();
-    }
-
-    reader->SetFileName(fileName.toStdString().c_str());
-    reader->Update();
-
-    vtkNew<vtkPolyDataMapper> mapper;
-    mapper->SetInputConnection(reader->GetOutputPort());
-
-    vtkNew<vtkActor> actor;
-    actor->SetMapper(mapper);
 
     auto renderers = ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->GetRenderers();
     auto renderer = renderers->GetFirstRenderer();
@@ -121,9 +127,10 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
     }
     renderer = renderers->GetFirstRenderer();
 
-    renderer->AddActor(actor);
+    printingModel = new PrintingModel(renderer);
+    printingModel->LoadModel(fileName);
+
+    renderer->AddActor(printingModel->GetModelActor());
     renderer->ResetCamera();
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
-
-    reader->Delete();
 }
