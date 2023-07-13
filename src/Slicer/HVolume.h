@@ -3,6 +3,7 @@
 #include <math.h>
 #include <float.h>
 #include <vector>
+#include <omp.h>
 
 #include "vtk_header_files.h"
 
@@ -61,7 +62,12 @@ public:
 	inline double GetYLength() const { return XYZ.y - xyz.y; }
 	inline double GetZLength() const { return XYZ.z - xyz.z; }
 
-	inline bool Contains(const HVector3& p) const { return (xyz.x <= p.x && p.x <= XYZ.x) && (xyz.y <= p.y && p.y <= XYZ.y) && (xyz.z <= p.z && p.z <= XYZ.z); }
+	inline bool Contains(const HVector3& p) const
+	{
+		return (xyz.x <= p.x && p.x <= XYZ.x) &&
+			(xyz.y <= p.y && p.y <= XYZ.y) &&
+			(xyz.z <= p.z && p.z <= XYZ.z);
+	}
 
 	inline bool Intersects(const HAABB& other) const
 	{
@@ -88,6 +94,8 @@ public:
 	}
 
 	void InsertToPolyData(vtkPolyData* polyData);
+
+	bool IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const HVector3& tp2);
 
 protected:
 	HVector3 center = { 0.0,  0.0,  0.0 };
@@ -118,11 +126,6 @@ protected:
 		extents.z = XYZ.z - center.z;
 	}
 };
-
-HVector3 CalculateNormal(const HVector3& vertexA, const HVector3& vertexB, const HVector3& vertexC);
-bool OverlapOnAxis(const HVector3& axis, const HVector3& minVertex, const HVector3& maxVertex, const HAABB& box);
-bool TriangleAABBIntersection(const HTriangle& triangle, const HAABB& box);
-bool BoxIntersectsTriangle(const HAABB& bounds, const HVector3& triangle0, const HVector3& triangle1, const HVector3& triangle2);
 
 class HVoxel : public HAABB
 {
@@ -164,116 +167,9 @@ public:
 		InitializeVTK(polyData);
 	}
 
-	void InitializeVTK(vtkPolyData* polyData)
-	{
-		auto cells = polyData->GetPolys();
-		auto noc = cells->GetNumberOfCells();
-		auto points = polyData->GetPoints();
-		auto nop = points->GetNumberOfPoints();
+	void InitializeVTK(vtkPolyData* polyData);
 
-		resolutionX = ceil(GetXLength() / voxelSize);
-		resolutionY = ceil(GetYLength() / voxelSize);
-		resolutionZ = ceil(GetZLength() / voxelSize);
-
-		voxels.resize(resolutionX * resolutionY * resolutionZ);
-
-		voxelsPolyData = vtkPolyData::New();
-		vtkNew<vtkPoints> voxelsPoints;
-		voxelsPolyData->SetPoints(voxelsPoints);
-		vtkNew<vtkCellArray> voxelsQuads;
-		voxelsPolyData->SetPolys(voxelsQuads);
-
-		vtkNew<vtkCellArray> pointCells;
-		voxelsPolyData->SetVerts(pointCells);
-
-		for (int z = 0; z < resolutionZ; z++)
-		{
-			for (int y = 0; y < resolutionY; y++)
-			{
-				for (int x = 0; x < resolutionX; x++)
-				{
-					auto min = HVector3({ x * voxelSize + xyz.x, y * voxelSize + xyz.y, z * voxelSize + xyz.z });
-					auto max = HVector3({ (x + 1) * voxelSize + xyz.x, (y + 1) * voxelSize + xyz.y, (z + 1) * voxelSize + xyz.z });
-
-					auto& voxel = GetVoxel(x, y, z);
-					voxel.SetMixMax(min, max);
-					//voxel.InsertToPolyData(voxelsPolyData);
-				}
-			}
-		}
-
-		for (size_t i = 0; i < noc; i++)
-		{
-			auto cell = polyData->GetCell(i);
-			auto pi0 = cell->GetPointId(0);
-			auto pi1 = cell->GetPointId(1);
-			auto pi2 = cell->GetPointId(2);
-			HVector3 p0, p1, p2;
-			points->GetPoint(pi0, (double*)&p0);
-			points->GetPoint(pi1, (double*)&p1);
-			points->GetPoint(pi2, (double*)&p2);
-
-			GetVoxel(p0).SetOccupied(true);
-			GetVoxel(p1).SetOccupied(true);
-			GetVoxel(p2).SetOccupied(true);
-
-
-			HAABB taabb;
-			taabb.Expand(p0);
-			taabb.Expand(p1);
-			taabb.Expand(p2);
-
-			auto tminIndex = GetIndex(taabb.GetMinPoint());
-			auto tmaxIndex = GetIndex(taabb.GetMaxPoint());
-
-			bool intersected = false;
-			for (size_t z = tminIndex.z; z <= tmaxIndex.z; z++)
-			{
-				for (size_t y = tminIndex.y; y <= tmaxIndex.y; y++)
-				{
-					for (size_t x = tminIndex.x; x <= tmaxIndex.x; x++)
-					{
-						auto& voxel = GetVoxel(x, y, z);
-						if (voxel.IsOccupied()) {
-							intersected = true;
-							continue;
-						}
-
-						HAABB vaabb(voxel.GetMinPoint(), voxel.GetMaxPoint());
-						if (BoxIntersectsTriangle(vaabb, p0, p1, p2)) {
-							//cout << "Intersects : " << resolutionZ * z + resolutionY * y + x << endl;
-							voxel.SetOccupied(true);
-							intersected = true;
-						}
-					}
-				}
-			}
-			if (intersected == false)
-			{
-				cout << "No intersects" << endl;
-				cout << "WTF?" << endl;
-			}
-		}
-
-		for (int z = 0; z < resolutionZ; z++)
-		{
-			for (int y = 0; y < resolutionY; y++)
-			{
-				for (int x = 0; x < resolutionX; x++)
-				{
-					auto& voxel = GetVoxel(x, y, z);
-					if (voxel.IsOccupied())
-					{
-						voxel.InsertToPolyData(voxelsPolyData);
-
-						//cout << "x : " << x << ", y : " << y << ", z : " << z << endl;
-					}
-				}
-			}
-		}
-	}
-
-	HVolumeIndex GetIndex(const HVector3& position)
+	inline HVolumeIndex GetIndex(const HVector3& position)
 	{
 		int x = floor((position.x - xyz.x) / voxelSize);
 		int y = floor((position.y - xyz.y) / voxelSize);
@@ -281,17 +177,17 @@ public:
 		return HVolumeIndex{ x, y, z };
 	}
 
-	HVoxel& GetVoxel(int x, int y, int z)
+	inline HVoxel& GetVoxel(int x, int y, int z)
 	{
 		return voxels[resolutionX * resolutionY * z + resolutionX * y + x];
 	}
 
-	HVoxel& GetVoxel(const HVolumeIndex& index)
+	inline HVoxel& GetVoxel(const HVolumeIndex& index)
 	{
 		return voxels[resolutionX * resolutionY * index.z + resolutionX * index.y + index.x];
 	}
 
-	HVoxel& GetVoxel(const HVector3& position)
+	inline HVoxel& GetVoxel(const HVector3& position)
 	{
 		int x = floor((position.x - xyz.x) / voxelSize);
 		int y = floor((position.y - xyz.y) / voxelSize);

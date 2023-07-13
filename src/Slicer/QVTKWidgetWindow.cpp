@@ -143,14 +143,9 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
     renderer->ResetCamera();
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
 
-    HVolume volume(0.25, printingModel->GetRawModelData());
-    auto minPoint = volume.GetMinPoint();
-    auto maxPoint = volume.GetMaxPoint();
-    cout << minPoint.x << ", " << minPoint.y << ", " << minPoint.z << ", "
-        << maxPoint.x << ", " << maxPoint.y << ", " << maxPoint.z << endl;
-
-    cout << "Resolution x: " << volume.GetResolutionX() << ", y: " << volume.GetResolutionY() << ", z: " << volume.GetResolutionZ() << endl;
-
+    HVolume volume(0.069, printingModel->GetRawModelData());
+    //HVolume volume(1, printingModel->GetRawModelData());
+    
     vtkNew<vtkPolyDataMapper> volumePolyDataMapper;
     volumePolyDataMapper->SetInputData(volume.GetPolyData());
 

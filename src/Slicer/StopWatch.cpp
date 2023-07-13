@@ -56,7 +56,7 @@ StopWatch::~StopWatch()
 {
 	for (auto kvp : s_stopWatches) {
 		if (kvp.second != nullptr) {
-			kvp.second->Stop();
+			//kvp.second->Stop();
 			delete kvp.second;
 			kvp.second = nullptr;
 		}
