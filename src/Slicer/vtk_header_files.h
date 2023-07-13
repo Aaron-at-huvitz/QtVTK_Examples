@@ -23,3 +23,4 @@
 #include <vtkLinearExtrusionFilter.h>
 #include <vtkContourFilter.h>
 #include <vtkAdaptiveSubdivisionFilter.h>
+#include <vtkQuad.h>

@@ -17,7 +17,9 @@ public:
 	inline vtkPolyData* GetRawModelData() const { return rawModelData; }
 	inline vtkPolyData* GetRemeshedModelData() const { return remeshedModelData; }
 	inline vtkPolyDataMapper* GetRawModelMapper() const { return rawModelMapper; }
+	inline vtkPolyDataMapper* GetRemeshedModelMapper() const { return remeshedModelMapper; }
 	inline vtkActor* GetRawModelActor() const { return rawModelActor; }
+	inline vtkActor* GetRemeshedModelActor() const { return remeshedModelActor; }
 
 protected:
 	vtkRenderer* renderer = nullptr;

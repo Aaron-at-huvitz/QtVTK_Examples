@@ -2,6 +2,9 @@
 #include "QVTKWidget.h"
 #include "PrintingModel.h"
 
+#include "HVolume.h"
+#include "StopWatch.h"
+
 QVTKWidgetWindow::QVTKWidgetWindow(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -119,6 +122,8 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
         printingModel = nullptr;
     }
 
+    StopWatch::Start("Model Loading");
+    
     auto renderers = ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->GetRenderers();
     auto renderer = renderers->GetFirstRenderer();
     while (nullptr != renderer) {
@@ -130,7 +135,32 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
     printingModel = new PrintingModel(renderer);
     printingModel->LoadModel(fileName);
 
-    renderer->AddActor(printingModel->GetRawModelActor());
+    //auto longestEdgeLength = printingModel->GetLongestEdgeLength();
+    //cout << "longestEdgeLength : " << longestEdgeLength << endl;
+    //printingModel->Remesh(0.25);
+
+    renderer->AddActor(printingModel->GetRemeshedModelActor());
     renderer->ResetCamera();
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+
+    HVolume volume(0.25, printingModel->GetRawModelData());
+    auto minPoint = volume.GetMinPoint();
+    auto maxPoint = volume.GetMaxPoint();
+    cout << minPoint.x << ", " << minPoint.y << ", " << minPoint.z << ", "
+        << maxPoint.x << ", " << maxPoint.y << ", " << maxPoint.z << endl;
+
+    cout << "Resolution x: " << volume.GetResolutionX() << ", y: " << volume.GetResolutionY() << ", z: " << volume.GetResolutionZ() << endl;
+
+    vtkNew<vtkPolyDataMapper> volumePolyDataMapper;
+    volumePolyDataMapper->SetInputData(volume.GetPolyData());
+
+    vtkNew<vtkActor> volumeActor;
+    volumeActor->SetMapper(volumePolyDataMapper);
+    volumeActor->GetProperty()->SetPointSize(10);
+
+    renderer->AddActor(volumeActor);
+    renderer->ResetCamera();
+    ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+
+    StopWatch::Stop("Model Loading");
 }

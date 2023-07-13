@@ -98,14 +98,16 @@
       <Optimization>MaxSpeed</Optimization>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="StopWatch.cpp" />
     <QtRcc Include="QVTKWidgetWindow.qrc" />
     <QtUic Include="QVTKWidgetWindow.ui" />
     <QtMoc Include="QVTKWidgetWindow.h" />
+    <ClCompile Include="HVolume.cpp" />
     <ClCompile Include="ModelClipper.cpp" />
     <ClCompile Include="PrintingModel.cpp" />
     <ClCompile Include="QVTKWidget.cpp" />
@@ -116,9 +118,11 @@
     <QtMoc Include="QVTKWidget.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HVolume.h" />
     <ClInclude Include="ModelClipper.h" />
     <ClInclude Include="PrintingModel.h" />
     <ClInclude Include="Qt_header_files.h" />
+    <ClInclude Include="StopWatch.h" />
     <ClInclude Include="vtk_header_files.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
