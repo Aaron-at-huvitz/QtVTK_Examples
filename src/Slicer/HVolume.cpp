@@ -1,8 +1,5 @@
 #include "HVolume.h"
 
-#define CUSTOM_MIN(a, b) (a) < (b) ? (a) : (b)
-#define CUSTOM_MAX(a, b) (a) > (b) ? (a) : (b)
-
 float Max(float a, float b, float c) {
     return std::max(std::max(a, b), c);
 }
@@ -165,15 +162,15 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
 
     // Exit if...
     // ... [-extents.X, extents.X] and [Min(v0.X,v1.X,v2.X), Max(v0.X,v1.X,v2.X)] do not overlap
-    if (Max(v0.x, v1.x, v2.x) < -extents.x || Min(v0.x, v1.x, v2.x) > extents.x)
+    if (Max(v0.x, v1.x, v2.x) <= -extents.x || Min(v0.x, v1.x, v2.x) > extents.x)
         return false;
 
     // ... [-extents.Y, extents.Y] and [Min(v0.Y,v1.Y,v2.Y), Max(v0.Y,v1.Y,v2.Y)] do not overlap
-    if (Max(v0.y, v1.y, v2.y) < -extents.y || Min(v0.y, v1.y, v2.y) > extents.y)
+    if (Max(v0.y, v1.y, v2.y) <= -extents.y || Min(v0.y, v1.y, v2.y) > extents.y)
         return false;
 
     // ... [-extents.Z, extents.Z] and [Min(v0.Z,v1.Z,v2.Z), Max(v0.Z,v1.Z,v2.Z)] do not overlap
-    if (Max(v0.z, v1.z, v2.z) < -extents.z || Min(v0.z, v1.z, v2.z) > extents.z)
+    if (Max(v0.z, v1.z, v2.z) <= -extents.z || Min(v0.z, v1.z, v2.z) > extents.z)
         return false;
 
     //// endregion
@@ -249,9 +246,9 @@ void HVolume::InitializeVTK(vtkPolyData* polyData)
 		points->GetPoint(pi1, (double*)&p1);
 		points->GetPoint(pi2, (double*)&p2);
 
-		GetVoxel(p0).SetOccupied(true);
-		GetVoxel(p1).SetOccupied(true);
-		GetVoxel(p2).SetOccupied(true);
+		//GetVoxel(p0).SetOccupied(true);
+		//GetVoxel(p1).SetOccupied(true);
+		//GetVoxel(p2).SetOccupied(true);
 
 
 		HAABB taabb;
@@ -272,10 +269,9 @@ void HVolume::InitializeVTK(vtkPolyData* polyData)
 					auto& voxel = GetVoxel(x, y, z);
 					if (voxel.IsOccupied()) {
 						intersected = true;
-						continue;
+						//continue;
 					}
 
-					HAABB vaabb(voxel.GetMinPoint(), voxel.GetMaxPoint());
 					if (voxel.IntersectsTriangle(p0, p1, p2)) {
 						//cout << "Intersects : " << resolutionZ * z + resolutionY * y + x << endl;
 						voxel.SetOccupied(true);
@@ -286,8 +282,12 @@ void HVolume::InitializeVTK(vtkPolyData* polyData)
 		}
 		if (intersected == false)
 		{
-			cout << "No intersects" << endl;
-			cout << "WTF?" << endl;
+			cout << "No intersects cellIndex : " << i << endl;
+			cout << "p0 : " << p0.x << ", " << p0.y << ", " << p0.z << endl;
+			cout << "p1 : " << p1.x << ", " << p1.y << ", " << p1.z << endl;
+			cout << "p2 : " << p2.x << ", " << p2.y << ", " << p2.z << endl;
+			cout << "tminIndex : " << tminIndex.x << ", " << tminIndex.y << ", " << tminIndex.z << endl;
+			cout << "tmaxIndex : " << tmaxIndex.x << ", " << tmaxIndex.y << ", " << tmaxIndex.z << endl << endl;
 		}
 	}
 

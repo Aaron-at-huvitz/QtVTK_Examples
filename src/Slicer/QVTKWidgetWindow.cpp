@@ -143,7 +143,7 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
     renderer->ResetCamera();
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
 
-    HVolume volume(0.069, printingModel->GetRawModelData());
+    HVolume volume(0.2, printingModel->GetRawModelData());
     //HVolume volume(1, printingModel->GetRawModelData());
     
     vtkNew<vtkPolyDataMapper> volumePolyDataMapper;

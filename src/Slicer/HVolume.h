@@ -161,8 +161,10 @@ public:
 		double bounds[6];
 		polyData->GetBounds(bounds);
 
-		Expand(bounds[0], bounds[2], bounds[4]);
-		Expand(bounds[1], bounds[3], bounds[5]);
+		double halfVoxelSize = voxelSize * 0.5;
+
+		Expand(bounds[0] - halfVoxelSize, bounds[2] - halfVoxelSize, bounds[4] - halfVoxelSize);
+		Expand(bounds[1] + halfVoxelSize, bounds[3] + halfVoxelSize, bounds[5] + halfVoxelSize);
 
 		InitializeVTK(polyData);
 	}

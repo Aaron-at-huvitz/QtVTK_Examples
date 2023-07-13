@@ -44,8 +44,8 @@ void PrintingModel::LoadModel(const QString& fileName)
     rawModelData->GetBounds(bounds);
     cout << "Model Bounds" << endl;
     cout << "xmin: " << bounds[0] << " xmax: " << bounds[1] <<
-            "ymin: " << bounds[2] << " ymax: " << bounds[3] <<
-            "zmin: " << bounds[4] << " zmax: " << bounds[5] << endl;
+            " ymin: " << bounds[2] << " ymax: " << bounds[3] <<
+            " zmin: " << bounds[4] << " zmax: " << bounds[5] << endl;
     cout << "xlength : " << bounds[1] - bounds[0] << ", ylength : " << bounds[3] - bounds[2] << ", zlength : " << bounds[5] - bounds[4] << endl;
 
     double center[3];
