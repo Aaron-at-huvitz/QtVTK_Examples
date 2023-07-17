@@ -162,16 +162,28 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
 
     // Exit if...
     // ... [-extents.X, extents.X] and [Min(v0.X,v1.X,v2.X), Max(v0.X,v1.X,v2.X)] do not overlap
-    if (Max(v0.x, v1.x, v2.x) <= -extents.x || Min(v0.x, v1.x, v2.x) > extents.x)
-        return false;
+    if (Max(v0.x, v1.x, v2.x) < -extents.x || Min(v0.x, v1.x, v2.x) > extents.x) {
+		if (Max(v0.x, v1.x, v2.x) - (-extents.x) > DBL_EPSILON ||
+			Min(v0.x, v1.x, v2.x) - (extents.x) > DBL_EPSILON) {
+			return false;
+		}
+	}
 
     // ... [-extents.Y, extents.Y] and [Min(v0.Y,v1.Y,v2.Y), Max(v0.Y,v1.Y,v2.Y)] do not overlap
-    if (Max(v0.y, v1.y, v2.y) <= -extents.y || Min(v0.y, v1.y, v2.y) > extents.y)
-        return false;
+    if (Max(v0.y, v1.y, v2.y) < -extents.y || Min(v0.y, v1.y, v2.y) > extents.y) {
+		if (Max(v0.y, v1.y, v2.y) - (-extents.y) > DBL_EPSILON ||
+			Min(v0.y, v1.y, v2.y) - (extents.y) > DBL_EPSILON) {
+			return false;
+		}
+	}
 
     // ... [-extents.Z, extents.Z] and [Min(v0.Z,v1.Z,v2.Z), Max(v0.Z,v1.Z,v2.Z)] do not overlap
-    if (Max(v0.z, v1.z, v2.z) <= -extents.z || Min(v0.z, v1.z, v2.z) > extents.z)
-        return false;
+	if (Max(v0.z, v1.z, v2.z) < -extents.z || Min(v0.z, v1.z, v2.z) > extents.z) {
+		if (Max(v0.z, v1.z, v2.z) - (-extents.z) > DBL_EPSILON ||
+			Min(v0.z, v1.z, v2.z) - (extents.z) > DBL_EPSILON) {
+			return false;
+		}
+	}
 
     //// endregion
 
@@ -199,9 +211,22 @@ void HVolume::InitializeVTK(vtkPolyData* polyData)
 	auto points = polyData->GetPoints();
 	auto nop = points->GetNumberOfPoints();
 
-	resolutionX = ceil(GetXLength() / voxelSize);
-	resolutionY = ceil(GetYLength() / voxelSize);
-	resolutionZ = ceil(GetZLength() / voxelSize);
+	double rX = GetXLength() / voxelSize;
+	double rY = GetYLength() / voxelSize;
+	double rZ = GetZLength() / voxelSize;
+
+	double drX, drY, drZ;
+	double mrX = modf(rX, &drX);
+	double mrY = modf(rY, &drY);
+	double mrZ = modf(rZ, &drZ);
+
+	resolutionX = ceil(rX);
+	resolutionY = ceil(rY);
+	resolutionZ = ceil(rZ);
+
+	if (mrX == 0) resolutionX += 1;
+	if (mrY == 0) resolutionY += 1;
+	if (mrZ == 0) resolutionZ += 1;
 
 	cout << xyz.x << ", " << xyz.y << ", " << xyz.z << ", "
 		<< XYZ.x << ", " << XYZ.y << ", " << XYZ.z << endl;
@@ -246,11 +271,6 @@ void HVolume::InitializeVTK(vtkPolyData* polyData)
 		points->GetPoint(pi1, (double*)&p1);
 		points->GetPoint(pi2, (double*)&p2);
 
-		//GetVoxel(p0).SetOccupied(true);
-		//GetVoxel(p1).SetOccupied(true);
-		//GetVoxel(p2).SetOccupied(true);
-
-
 		HAABB taabb;
 		taabb.Expand(p0);
 		taabb.Expand(p1);
@@ -275,6 +295,7 @@ void HVolume::InitializeVTK(vtkPolyData* polyData)
 					if (voxel.IntersectsTriangle(p0, p1, p2)) {
 						//cout << "Intersects : " << resolutionZ * z + resolutionY * y + x << endl;
 						voxel.SetOccupied(true);
+						voxel.SetCellId(i);
 						intersected = true;
 					}
 				}
@@ -301,8 +322,6 @@ void HVolume::InitializeVTK(vtkPolyData* polyData)
 				if (voxel.IsOccupied())
 				{
 					voxel.InsertToPolyData(voxelsPolyData);
-
-					//cout << "x : " << x << ", y : " << y << ", z : " << z << endl;
 				}
 			}
 		}

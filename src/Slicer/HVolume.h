@@ -1,9 +1,15 @@
 #pragma once
 
+//#define FLT_EPSILON = 1.192093e-07
+//#define DBL_EPSILON = 2.220446e-16
+//#define LDBL_EPSILON = 1.084202e-19
+
 #include <math.h>
 #include <float.h>
 #include <vector>
 #include <omp.h>
+
+#include <set>
 
 #include "vtk_header_files.h"
 
@@ -138,6 +144,10 @@ public:
 	inline bool IsOccupied() const { return occupied; }
 	inline void SetOccupied(bool isOccupied) { occupied = isOccupied; }
 
+	inline void SetCellId(int id) { cellIds.insert(id); }
+
+	std::set<int> cellIds;
+
 protected:
 	bool occupied = false;
 };
@@ -163,8 +173,10 @@ public:
 
 		double halfVoxelSize = voxelSize * 0.5;
 
-		Expand(bounds[0] - halfVoxelSize, bounds[2] - halfVoxelSize, bounds[4] - halfVoxelSize);
-		Expand(bounds[1] + halfVoxelSize, bounds[3] + halfVoxelSize, bounds[5] + halfVoxelSize);
+		//Expand(bounds[0] - halfVoxelSize, bounds[2] - halfVoxelSize, bounds[4] - halfVoxelSize);
+		//Expand(bounds[1] + halfVoxelSize, bounds[3] + halfVoxelSize, bounds[5] + halfVoxelSize);
+		Expand(bounds[0], bounds[2], bounds[4]);
+		Expand(bounds[1], bounds[3], bounds[5]);
 
 		InitializeVTK(polyData);
 	}
