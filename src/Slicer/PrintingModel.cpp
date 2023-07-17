@@ -57,22 +57,17 @@ void PrintingModel::LoadModel(const QString& fileName)
 
 void PrintingModel::Clear()
 {
-    if (nullptr != rawModelData)
+    if (nullptr != volume)
     {
-        rawModelData->Delete();
-        rawModelData = nullptr;
+        delete volume;
+        volume = nullptr;
     }
 
+#pragma region Remeshed Model
     if (nullptr != remeshedModelData)
     {
         remeshedModelData->Delete();
         remeshedModelData = nullptr;
-    }
-
-    if (nullptr != rawModelMapper)
-    {
-        rawModelMapper->Delete();
-        rawModelMapper = nullptr;
     }
 
     if (nullptr != remeshedModelMapper)
@@ -81,19 +76,163 @@ void PrintingModel::Clear()
         remeshedModelMapper = nullptr;
     }
 
-    if (nullptr != rawModelActor)
-    {
-        renderer->RemoveActor(rawModelActor);
-        rawModelActor->Delete();
-        rawModelActor = nullptr;
-    }
-
     if (nullptr != remeshedModelActor)
     {
         renderer->RemoveActor(remeshedModelActor);
         remeshedModelActor->Delete();
         remeshedModelActor = nullptr;
     }
+#pragma endregion
+
+#pragma region Overhang Model
+    if (nullptr != overhangModelData)
+    {
+        overhangModelData->Delete();
+        overhangModelData = nullptr;
+    }
+
+    if (nullptr != overhangModelMapper)
+    {
+        overhangModelMapper->Delete();
+        overhangModelMapper = nullptr;
+    }
+
+    if (nullptr != overhangModelActor)
+    {
+        renderer->RemoveActor(overhangModelActor);
+        overhangModelActor->Delete();
+        overhangModelActor = nullptr;
+    }
+#pragma endregion
+
+#pragma region Volume Model
+    if (nullptr != volumeModelData)
+    {
+        volumeModelData->Delete();
+        volumeModelData = nullptr;
+    }
+
+    if (nullptr != volumeModelMapper)
+    {
+        volumeModelMapper->Delete();
+        volumeModelMapper = nullptr;
+    }
+
+    if (nullptr != volumeModelActor)
+    {
+        renderer->RemoveActor(volumeModelActor);
+        volumeModelActor->Delete();
+        volumeModelActor = nullptr;
+    }
+#pragma endregion
+
+#pragma region Raw Model
+    if (nullptr != rawModelData)
+    {
+        rawModelData->Delete();
+        rawModelData = nullptr;
+    }
+
+    if (nullptr != rawModelMapper)
+    {
+        rawModelMapper->Delete();
+        rawModelMapper = nullptr;
+    }
+
+    if (nullptr != rawModelActor)
+    {
+        renderer->RemoveActor(rawModelActor);
+        rawModelActor->Delete();
+        rawModelActor = nullptr;
+    }
+#pragma endregion
+}
+
+void PrintingModel::Voxelize(double voxelSize)
+{
+    if (nullptr != volumeModelData)
+    {
+        volumeModelData->Delete();
+        volumeModelData = nullptr;
+    }
+
+    if (nullptr != volumeModelMapper)
+    {
+        volumeModelMapper->Delete();
+        volumeModelMapper = nullptr;
+    }
+
+    if (nullptr != volumeModelActor)
+    {
+        renderer->RemoveActor(volumeModelActor);
+        volumeModelActor->Delete();
+        volumeModelActor = nullptr;
+    }
+
+    volumeModelData = vtkPolyData::New();
+    vtkNew<vtkPoints> voxelsPoints;
+    volumeModelData->SetPoints(voxelsPoints);
+    vtkNew<vtkCellArray> voxelsQuads;
+    volumeModelData->SetPolys(voxelsQuads);
+
+    volume = new HVolume(voxelSize, rawModelData, volumeModelData);
+
+    volumeModelMapper = vtkPolyDataMapper::New();
+    volumeModelMapper->SetInputData(volumeModelData);
+
+    volumeModelActor = vtkActor::New();
+    volumeModelActor->SetMapper(volumeModelMapper);
+    volumeModelActor->GetProperty()->SetRepresentationToWireframe();
+    volumeModelActor->GetProperty()->SetColor(0.0, 0.5, 0.0);
+
+    renderer->AddActor(volumeModelActor);
+}
+
+void PrintingModel::AnalyzeOverhang()
+{
+    overhangModelData = vtkPolyData::New();
+    overhangModelData->DeepCopy(rawModelData);
+
+    vtkNew<vtkPolyDataNormals> normals;
+    normals->SetInputData(overhangModelData);
+    normals->ComputePointNormalsOn();
+    normals->Update();
+
+    auto polyDataWithNormal = normals->GetOutput();
+
+    vtkNew<vtkFloatArray> overhangIntensity;
+    overhangIntensity->SetNumberOfComponents(1);
+    overhangIntensity->SetName("OverhangIntensity");
+
+    auto pointDatas = polyDataWithNormal->GetPointData();
+    for (size_t i = 0; i < polyDataWithNormal->GetNumberOfPoints(); i++)
+    {
+        auto normal = pointDatas->GetNormals()->GetTuple(i);
+        double gravity[3] = { 0.0, 0.0, -1.0 };
+        auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors(normal, gravity));
+        //if (angle < 45) angle = 45;
+
+        overhangIntensity->InsertNextValue(angle);
+    }
+
+    overhangModelData->GetPointData()->SetScalars(overhangIntensity);
+
+    overhangModelMapper = vtkPolyDataMapper::New();
+    overhangModelMapper->SetInputData(overhangModelData);
+    overhangModelMapper->ScalarVisibilityOn();
+    overhangModelMapper->SetScalarModeToUsePointData();
+
+    vtkNew<vtkColorTransferFunction> colorTransferFunction;
+    colorTransferFunction->AddRGBPoint(0, 1.0, 0.0, 0.0);
+    colorTransferFunction->AddRGBPoint(45, 1.0, 1.0, 1.0);
+    colorTransferFunction->AddRGBPoint(90, 1.0, 1.0, 1.0);
+    overhangModelMapper->SetLookupTable(colorTransferFunction);
+
+    overhangModelActor = vtkActor::New();
+    overhangModelActor->SetMapper(overhangModelMapper);
+
+    renderer->AddActor(overhangModelActor);
+    rawModelActor->VisibilityOff();
 }
 
 double PrintingModel::GetLongestEdgeLength()
@@ -165,106 +304,4 @@ void PrintingModel::Remesh(double edgeLength)
 
     remeshedModelActor = vtkActor::New();
     remeshedModelActor->SetMapper(remeshedModelMapper);
-}
-
-struct Vector3 {
-    float x, y, z;
-};
-
-struct Triangle {
-    Vector3 vertexA, vertexB, vertexC;
-};
-
-struct AABB {
-    Vector3 minPoint, maxPoint;
-};
-
-Vector3 CalculateNormal(const Vector3& vertexA, const Vector3& vertexB, const Vector3& vertexC) {
-    Vector3 edgeAB{ vertexB.x - vertexA.x, vertexB.y - vertexA.y, vertexB.z - vertexA.z };
-    Vector3 edgeAC{ vertexC.x - vertexA.x, vertexC.y - vertexA.y, vertexC.z - vertexA.z };
-
-    Vector3 normal;
-    normal.x = (edgeAB.y * edgeAC.z) - (edgeAB.z * edgeAC.y);
-    normal.y = (edgeAB.z * edgeAC.x) - (edgeAB.x * edgeAC.z);
-    normal.z = (edgeAB.x * edgeAC.y) - (edgeAB.y * edgeAC.x);
-
-    // Normalize the normal vector
-    float length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-    normal.x /= length;
-    normal.y /= length;
-    normal.z /= length;
-
-    return normal;
-}
-
-bool OverlapOnAxis(const Vector3& axis, const Vector3& minVertex, const Vector3& maxVertex, const AABB& box) {
-    float minIntervalA = (minVertex.x * axis.x + minVertex.y * axis.y + minVertex.z * axis.z);
-    float maxIntervalA = (maxVertex.x * axis.x + maxVertex.y * axis.y + maxVertex.z * axis.z);
-
-    float minIntervalB, maxIntervalB;
-
-    // Project the AABB onto the axis
-    if (axis.x > 0.0f) {
-        minIntervalB = box.minPoint.x;
-        maxIntervalB = box.maxPoint.x;
-    }
-    else {
-        minIntervalB = box.maxPoint.x;
-        maxIntervalB = box.minPoint.x;
-    }
-
-    if (maxIntervalA < minIntervalB || minIntervalA > maxIntervalB) {
-        // The projections do not overlap, separating axis found
-        return false;
-    }
-
-    return true;
-}
-
-bool TriangleAABBIntersection(const Triangle& triangle, const AABB& box) {
-    // Convert the AABB into convex planes
-    Vector3 faceNormals[6] = {
-        {1.0f, 0.0f, 0.0f},  // Right
-        {-1.0f, 0.0f, 0.0f}, // Left
-        {0.0f, 1.0f, 0.0f},  // Top
-        {0.0f, -1.0f, 0.0f}, // Bottom
-        {0.0f, 0.0f, 1.0f},  // Front
-        {0.0f, 0.0f, -1.0f}  // Back
-    };
-
-    // Check for overlap on each potential separating axis
-    for (int i = 0; i < 6; i++) {
-        if (!OverlapOnAxis(faceNormals[i], triangle.vertexA, triangle.vertexC, box)) {
-            return false;
-        }
-    }
-
-    // Calculate the triangle's normal
-    Vector3 triangleNormal = CalculateNormal(triangle.vertexA, triangle.vertexB, triangle.vertexC);
-
-    // Check for overlap with triangle's normal
-    if (!OverlapOnAxis(triangleNormal, triangle.vertexA, triangle.vertexC, box)) {
-        return false;
-    }
-
-    return true;
-}
-
-void Voxelize()
-{
-    Triangle triangle;
-    triangle.vertexA = { 1.0f, 2.0f, 3.0f };
-    triangle.vertexB = { 4.0f, 5.0f, 6.0f };
-    triangle.vertexC = { 7.0f, 8.0f, 9.0f };
-
-    AABB box;
-    box.minPoint = { 0.0f, 0.0f, 0.0f };
-    box.maxPoint = { 5.0f, 5.0f, 5.0f };
-
-    if (TriangleAABBIntersection(triangle, box)) {
-        std::cout << "Triangle and AABB intersect." << std::endl;
-    }
-    else {
-        std::cout << "Triangle and AABB do not intersect." << std::endl;
-    }
 }

@@ -159,29 +159,13 @@ struct HVolumeIndex {
 class HVolume : public HAABB
 {
 public:
-	//HVolume(double voxelSize, const HVector3& minPoint, const HVector3& maxPoint)
-	//	: HAABB(minPoint, maxPoint), voxelSize(voxelSize)
-	//{
-	//	InitializeVTK();
-	//}
+	//HVolume(double voxelSize, const HVector3& minPoint, const HVector3& maxPoint);
 
-	HVolume(double voxelSize, vtkPolyData* polyData)
-		: voxelSize(voxelSize)
-	{
-		double bounds[6];
-		polyData->GetBounds(bounds);
+	HVolume(double voxelSize, vtkPolyData* rawModelData, vtkPolyData* volumeModelData);
 
-		double halfVoxelSize = voxelSize * 0.5;
+	void Initialize(vtkPolyData* rawModelData);
 
-		//Expand(bounds[0] - halfVoxelSize, bounds[2] - halfVoxelSize, bounds[4] - halfVoxelSize);
-		//Expand(bounds[1] + halfVoxelSize, bounds[3] + halfVoxelSize, bounds[5] + halfVoxelSize);
-		Expand(bounds[0], bounds[2], bounds[4]);
-		Expand(bounds[1], bounds[3], bounds[5]);
-
-		InitializeVTK(polyData);
-	}
-
-	void InitializeVTK(vtkPolyData* polyData);
+	void InitializeVTK(vtkPolyData* volumeModelData);
 
 	inline HVolumeIndex GetIndex(const HVector3& position)
 	{
@@ -213,7 +197,7 @@ public:
 	inline int GetResolutionY() const { return resolutionY; }
 	inline int GetResolutionZ() const { return resolutionZ; }
 
-	inline vtkPolyData* GetPolyData() { return voxelsPolyData; }
+	inline vtkPolyData* GetPolyData() { return volumeModelData; }
 
 protected:
 	double voxelSize = 0.0;
@@ -222,5 +206,6 @@ protected:
 	int resolutionZ = 0;
 
 	std::vector<HVoxel> voxels;
-	vtkPolyData* voxelsPolyData = nullptr;
+	vtkPolyData* rawModelData = nullptr;
+	vtkPolyData* volumeModelData = nullptr;
 };

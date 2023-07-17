@@ -21,6 +21,11 @@ QVTKWidgetWindow::QVTKWidgetWindow(QWidget *parent)
 
 QVTKWidgetWindow::~QVTKWidgetWindow()
 {
+    if (nullptr != printingModel)
+    {
+        delete printingModel;
+        printingModel = nullptr;
+    }
 }
 
 void QVTKWidgetWindow::InitializeVTK()
@@ -78,8 +83,11 @@ void QVTKWidgetWindow::InitializeVTK()
 void QVTKWidgetWindow::InitializeMenuBar()
 {
     auto fileMenu = ui.menuBar->addMenu("File (&F)");
-
     fileMenu->addAction("Open (&O)", this, SLOT(OnMenuActionOpen()));
+
+    auto analyzeMenu = ui.menuBar->addMenu("Analyze (&A)");
+    analyzeMenu->addAction("Analyze Overhang (&O)", this, SLOT(OnMenuActionAnalyzeOverhang()));
+    analyzeMenu->addAction("Voxelize (&V)", this, SLOT(OnMenuActionAnalyzeVoxelize()));
 }
 
 void QVTKWidgetWindow::InitializeSliders()
@@ -94,7 +102,38 @@ void QVTKWidgetWindow::OnMenuActionOpen()
     auto fileName = QFileDialog::getOpenFileName(this, "Open File", "C:/Resources/3D/STL", "Supported Mesh Files (*.stl *.obj *.ply);;STL Files (*.stl);;Obj Files (*.obj);;PLY Files (*.ply)");
     if (false == fileName.isEmpty())
     {
+        StopWatch::Start("Model Loading");
+        
         LoadModel(fileName);
+        ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+        
+        StopWatch::Stop("Model Loading");
+    }
+}
+
+void QVTKWidgetWindow::OnMenuActionAnalyzeOverhang()
+{
+    if (nullptr != printingModel)
+    {
+        StopWatch::Start("Analyze Overhang");
+
+        printingModel->AnalyzeOverhang();
+        ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+
+        StopWatch::Stop("Analyze Overhang");
+    }
+}
+
+void QVTKWidgetWindow::OnMenuActionAnalyzeVoxelize()
+{
+    if (nullptr != printingModel)
+    {
+        StopWatch::Start("Voxelize");
+
+        printingModel->Voxelize(0.2);
+        ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+
+        StopWatch::Stop("Voxelize");
     }
 }
 
@@ -122,8 +161,6 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
         printingModel = nullptr;
     }
 
-    StopWatch::Start("Model Loading");
-    
     auto renderers = ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->GetRenderers();
     auto renderer = renderers->GetFirstRenderer();
     while (nullptr != renderer) {
@@ -137,25 +174,10 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
 
     //auto longestEdgeLength = printingModel->GetLongestEdgeLength();
     //cout << "longestEdgeLength : " << longestEdgeLength << endl;
-    //printingModel->Remesh(0.25);
+    //printingModel->Remesh(0.2);
+    //renderer->AddActor(printingModel->GetRemeshedModelActor());
 
-    renderer->AddActor(printingModel->GetRemeshedModelActor());
+    renderer->AddActor(printingModel->GetRawModelActor());
+
     renderer->ResetCamera();
-    ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
-
-    HVolume volume(0.2, printingModel->GetRawModelData());
-    //HVolume volume(1, printingModel->GetRawModelData());
-    
-    vtkNew<vtkPolyDataMapper> volumePolyDataMapper;
-    volumePolyDataMapper->SetInputData(volume.GetPolyData());
-
-    vtkNew<vtkActor> volumeActor;
-    volumeActor->SetMapper(volumePolyDataMapper);
-    volumeActor->GetProperty()->SetPointSize(10);
-
-    renderer->AddActor(volumeActor);
-    renderer->ResetCamera();
-    ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
-
-    StopWatch::Stop("Model Loading");
 }
