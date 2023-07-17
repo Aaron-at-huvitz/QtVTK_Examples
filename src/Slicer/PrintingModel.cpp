@@ -7,7 +7,7 @@ PrintingModel::PrintingModel(vtkRenderer* renderer)
 
 PrintingModel::~PrintingModel()
 {
-    this->Clear();
+    this->ClearAll();
 }
 
 void PrintingModel::LoadModel(const QString& fileName)
@@ -55,7 +55,7 @@ void PrintingModel::LoadModel(const QString& fileName)
     reader->Delete();
 }
 
-void PrintingModel::Clear()
+void PrintingModel::ClearAll()
 {
     if (nullptr != volume)
     {
@@ -63,7 +63,17 @@ void PrintingModel::Clear()
         volume = nullptr;
     }
 
-#pragma region Remeshed Model
+    ClearRemeshedModel();
+
+    ClearOverhangModel();
+
+    ClearVolumeModel();
+
+    ClearRawModel();
+}
+
+void PrintingModel::ClearRemeshedModel()
+{
     if (nullptr != remeshedModelData)
     {
         remeshedModelData->Delete();
@@ -82,9 +92,10 @@ void PrintingModel::Clear()
         remeshedModelActor->Delete();
         remeshedModelActor = nullptr;
     }
-#pragma endregion
+}
 
-#pragma region Overhang Model
+void PrintingModel::ClearOverhangModel()
+{
     if (nullptr != overhangModelData)
     {
         overhangModelData->Delete();
@@ -103,52 +114,9 @@ void PrintingModel::Clear()
         overhangModelActor->Delete();
         overhangModelActor = nullptr;
     }
-#pragma endregion
-
-#pragma region Volume Model
-    if (nullptr != volumeModelData)
-    {
-        volumeModelData->Delete();
-        volumeModelData = nullptr;
-    }
-
-    if (nullptr != volumeModelMapper)
-    {
-        volumeModelMapper->Delete();
-        volumeModelMapper = nullptr;
-    }
-
-    if (nullptr != volumeModelActor)
-    {
-        renderer->RemoveActor(volumeModelActor);
-        volumeModelActor->Delete();
-        volumeModelActor = nullptr;
-    }
-#pragma endregion
-
-#pragma region Raw Model
-    if (nullptr != rawModelData)
-    {
-        rawModelData->Delete();
-        rawModelData = nullptr;
-    }
-
-    if (nullptr != rawModelMapper)
-    {
-        rawModelMapper->Delete();
-        rawModelMapper = nullptr;
-    }
-
-    if (nullptr != rawModelActor)
-    {
-        renderer->RemoveActor(rawModelActor);
-        rawModelActor->Delete();
-        rawModelActor = nullptr;
-    }
-#pragma endregion
 }
 
-void PrintingModel::Voxelize(double voxelSize)
+void PrintingModel::ClearVolumeModel()
 {
     if (nullptr != volumeModelData)
     {
@@ -168,6 +136,33 @@ void PrintingModel::Voxelize(double voxelSize)
         volumeModelActor->Delete();
         volumeModelActor = nullptr;
     }
+}
+
+void PrintingModel::ClearRawModel()
+{
+    if (nullptr != rawModelData)
+    {
+        rawModelData->Delete();
+        rawModelData = nullptr;
+    }
+
+    if (nullptr != rawModelMapper)
+    {
+        rawModelMapper->Delete();
+        rawModelMapper = nullptr;
+    }
+
+    if (nullptr != rawModelActor)
+    {
+        renderer->RemoveActor(rawModelActor);
+        rawModelActor->Delete();
+        rawModelActor = nullptr;
+    }
+}
+
+void PrintingModel::Voxelize(double voxelSize)
+{
+    ClearVolumeModel();
 
     volumeModelData = vtkPolyData::New();
     vtkNew<vtkPoints> voxelsPoints;
@@ -188,14 +183,24 @@ void PrintingModel::Voxelize(double voxelSize)
     renderer->AddActor(volumeModelActor);
 }
 
-void PrintingModel::AnalyzeOverhang()
+void PrintingModel::AnalyzeOverhang(bool faceNormal)
 {
+    ClearOverhangModel();
+
     overhangModelData = vtkPolyData::New();
     overhangModelData->DeepCopy(rawModelData);
 
     vtkNew<vtkPolyDataNormals> normals;
     normals->SetInputData(overhangModelData);
-    normals->ComputePointNormalsOn();
+    if (faceNormal)
+    {
+        normals->ComputeCellNormalsOn();
+    }
+    else
+    {
+        normals->ComputePointNormalsOn();
+    }
+
     normals->Update();
 
     auto polyDataWithNormal = normals->GetOutput();
@@ -204,23 +209,52 @@ void PrintingModel::AnalyzeOverhang()
     overhangIntensity->SetNumberOfComponents(1);
     overhangIntensity->SetName("OverhangIntensity");
 
-    auto pointDatas = polyDataWithNormal->GetPointData();
-    for (size_t i = 0; i < polyDataWithNormal->GetNumberOfPoints(); i++)
+    if (faceNormal)
     {
-        auto normal = pointDatas->GetNormals()->GetTuple(i);
-        double gravity[3] = { 0.0, 0.0, -1.0 };
-        auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors(normal, gravity));
-        //if (angle < 45) angle = 45;
+        auto cellDatas = polyDataWithNormal->GetCellData();
+        auto cellNormals = cellDatas->GetNormals();
+        for (size_t i = 0; i < polyDataWithNormal->GetNumberOfCells(); i++)
+        {
+            auto normal = cellNormals->GetTuple(i);
 
-        overhangIntensity->InsertNextValue(angle);
+            double gravity[3] = { 0.0, 0.0, -1.0 };
+            auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors(normal, gravity));
+            //if (angle < 45) angle = 45;
+
+            overhangIntensity->InsertNextValue(angle);
+        }
+
+        overhangModelData->GetCellData()->SetScalars(overhangIntensity);
     }
+    else
+    {
+        auto pointDatas = polyDataWithNormal->GetPointData();
+        auto pointNormals = pointDatas->GetNormals();
+        for (size_t i = 0; i < polyDataWithNormal->GetNumberOfPoints(); i++)
+        {
+            auto normal = pointNormals->GetTuple(i);
+            double gravity[3] = { 0.0, 0.0, -1.0 };
+            auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors(normal, gravity));
+            //if (angle < 45) angle = 45;
 
-    overhangModelData->GetPointData()->SetScalars(overhangIntensity);
+            overhangIntensity->InsertNextValue(angle);
+        }
+
+        overhangModelData->GetPointData()->SetScalars(overhangIntensity);
+    }
 
     overhangModelMapper = vtkPolyDataMapper::New();
     overhangModelMapper->SetInputData(overhangModelData);
     overhangModelMapper->ScalarVisibilityOn();
-    overhangModelMapper->SetScalarModeToUsePointData();
+    overhangModelMapper->SetColorModeToMapScalars();
+    if (faceNormal)
+    {
+        overhangModelMapper->SetScalarModeToUseCellData();
+    }
+    else
+    {
+        overhangModelMapper->SetScalarModeToUsePointData();
+    }
 
     vtkNew<vtkColorTransferFunction> colorTransferFunction;
     colorTransferFunction->AddRGBPoint(0, 1.0, 0.0, 0.0);

@@ -86,7 +86,12 @@ void QVTKWidgetWindow::InitializeMenuBar()
     fileMenu->addAction("Open (&O)", this, SLOT(OnMenuActionOpen()));
 
     auto analyzeMenu = ui.menuBar->addMenu("Analyze (&A)");
-    analyzeMenu->addAction("Analyze Overhang (&O)", this, SLOT(OnMenuActionAnalyzeOverhang()));
+
+    auto overhangMenu = analyzeMenu->addMenu("Overhang (&O)");
+    {
+        overhangMenu->addAction("Overhang Vertex Normal (&V)", this, SLOT(OnMenuActionAnalyzeOverhangVertexNormal()));
+        overhangMenu->addAction("Overhang Face Normal (&F)", this, SLOT(OnMenuActionAnalyzeOverhangFaceNormal()));
+    }
     analyzeMenu->addAction("Voxelize (&V)", this, SLOT(OnMenuActionAnalyzeVoxelize()));
 }
 
@@ -111,16 +116,29 @@ void QVTKWidgetWindow::OnMenuActionOpen()
     }
 }
 
-void QVTKWidgetWindow::OnMenuActionAnalyzeOverhang()
+void QVTKWidgetWindow::OnMenuActionAnalyzeOverhangVertexNormal()
 {
     if (nullptr != printingModel)
     {
-        StopWatch::Start("Analyze Overhang");
+        StopWatch::Start("Analyze Overhang Vertex Normal");
 
-        printingModel->AnalyzeOverhang();
+        printingModel->AnalyzeOverhang(false);
         ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
 
-        StopWatch::Stop("Analyze Overhang");
+        StopWatch::Stop("Analyze Overhang Vertex Normal");
+    }
+}
+
+void QVTKWidgetWindow::OnMenuActionAnalyzeOverhangFaceNormal()
+{
+    if (nullptr != printingModel)
+    {
+        StopWatch::Start("Analyze Overhang Face Normal");
+
+        printingModel->AnalyzeOverhang(true);
+        ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+
+        StopWatch::Stop("Analyze Overhang Face Normal");
     }
 }
 

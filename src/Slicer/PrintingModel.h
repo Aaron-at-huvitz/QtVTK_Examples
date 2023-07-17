@@ -11,11 +11,16 @@ public:
 	virtual ~PrintingModel();
 
 	void LoadModel(const QString& fileName);
-	void Clear();
+	void ClearAll();
+
+	void ClearRemeshedModel();
+	void ClearOverhangModel();
+	void ClearVolumeModel();
+	void ClearRawModel();
 
 	void Voxelize(double voxelSize);
 
-	void AnalyzeOverhang();
+	void AnalyzeOverhang(bool faceNormal = true);
 
 	double GetLongestEdgeLength();
 	void Remesh(double edgeLength);

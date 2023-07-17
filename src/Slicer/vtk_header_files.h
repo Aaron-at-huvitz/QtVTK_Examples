@@ -18,6 +18,7 @@
 #include <vtkCamera.h>
 #include <vtkQuad.h>
 #include <vtkPointData.h>
+#include <vtkCellData.h>
 
 #include <vtkConeSource.h>
 #include <vtkCubeSource.h>
