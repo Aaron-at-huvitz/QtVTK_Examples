@@ -21,6 +21,7 @@ public:
 	void Voxelize(double voxelSize);
 
 	void AnalyzeOverhang(bool faceNormal = true);
+	void AnalyzeIsland();
 
 	double GetLongestEdgeLength();
 	void Remesh(double edgeLength);

@@ -108,7 +108,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="StopWatch.cpp" />
+    <ClCompile Include="QVoxelizationOptionDialog.cpp" />
     <QtRcc Include="QVTKWidgetWindow.qrc" />
+    <QtUic Include="QVoxelizationOptionDialog.ui" />
     <QtUic Include="QVTKWidgetWindow.ui" />
     <QtMoc Include="QVTKWidgetWindow.h" />
     <ClCompile Include="HVolume.cpp" />
@@ -127,6 +129,7 @@
     <ClInclude Include="PrintingModel.h" />
     <ClInclude Include="Qt_header_files.h" />
     <ClInclude Include="StopWatch.h" />
+    <QtMoc Include="QVoxelizationOptionDialog.h" />
     <ClInclude Include="vtk_header_files.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

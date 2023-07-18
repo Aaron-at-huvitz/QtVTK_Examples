@@ -52,14 +52,23 @@
     <ClCompile Include="StopWatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="QVoxelizationOptionDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="QVTKWidget.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="QVoxelizationOptionDialog.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="QVTKWidgetWindow.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="QVoxelizationOptionDialog.ui">
       <Filter>Form Files</Filter>
     </QtUic>
   </ItemGroup>

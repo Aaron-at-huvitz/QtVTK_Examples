@@ -1,5 +1,8 @@
 #include "PrintingModel.h"
 
+#include <map>
+#include <set>
+
 PrintingModel::PrintingModel(vtkRenderer* renderer)
     : renderer(renderer)
 {
@@ -267,6 +270,99 @@ void PrintingModel::AnalyzeOverhang(bool faceNormal)
 
     renderer->AddActor(overhangModelActor);
     rawModelActor->VisibilityOff();
+}
+
+void PrintingModel::AnalyzeIsland()
+{
+    std::map<vtkIdType, std::set<vtkIdType>> linkedPoints;
+    std::map<vtkIdType, vtkIdType> lowestVertex;
+
+    auto noc = rawModelData->GetNumberOfCells();
+    for (size_t i = 0; i < noc; i++)
+    {
+        auto cell = rawModelData->GetCell(i);
+        auto points = cell->GetPointIds();
+
+        auto pi0 = points->GetId(0);
+        auto pi1 = points->GetId(1);
+        auto pi2 = points->GetId(2);
+
+        if (linkedPoints.count(pi0) == 0) {
+            linkedPoints[pi0] = std::set<vtkIdType>();
+        }
+        linkedPoints[pi0].insert(pi1);
+        linkedPoints[pi0].insert(pi2);
+
+        if (linkedPoints.count(pi1) == 0) {
+            linkedPoints[pi1] = std::set<vtkIdType>();
+        }
+        linkedPoints[pi1].insert(pi0);
+        linkedPoints[pi1].insert(pi2);
+
+        if (linkedPoints.count(pi2) == 0) {
+            linkedPoints[pi2] = std::set<vtkIdType>();
+        }
+        linkedPoints[pi2].insert(pi0);
+        linkedPoints[pi2].insert(pi1);
+    }
+
+    auto nop = rawModelData->GetNumberOfPoints();
+    for (size_t i = 0; i < nop; i++)
+    {
+        if (linkedPoints.count(i) == 0)
+        {
+            cout << "??? i: " << i << endl;
+            continue;
+        }
+        else
+        {
+            auto& lps = linkedPoints[i];
+            auto position = rawModelData->GetPoint(i);
+            auto zmin = position[2];
+            auto zminIndex = i;
+            int sameZCount = 0;
+            for (auto& pi : lps)
+            {
+                auto p = rawModelData->GetPoint(pi);
+                if (p[2] < zmin) {
+                    zminIndex = pi;
+                    zmin = p[2];
+                }
+            }
+            lowestVertex[i] = zminIndex;
+        }
+    }
+
+    std::set<vtkIdType> islandPoints;
+    for (auto& kvp : linkedPoints)
+    {
+        auto currentId = kvp.first;
+        auto nextId = lowestVertex[currentId];
+        bool store = false;
+        while (currentId != nextId)
+        {
+            currentId = nextId;
+            nextId = lowestVertex[currentId];
+        }
+        islandPoints.insert(currentId);
+    }
+
+    vtkNew<vtkSphereSource> sphereSource;
+    sphereSource->SetRadius(0.5);
+    vtkNew<vtkPolyDataMapper> sphereMapper;
+    sphereMapper->SetInputConnection(sphereSource->GetOutputPort());
+
+    for (auto& i : islandPoints)
+    {
+        auto p = rawModelData->GetPoint(i);
+        vtkNew<vtkActor> sphereActor;
+        sphereActor->SetMapper(sphereMapper);
+        sphereActor->SetPosition(p);
+        sphereActor->GetProperty()->SetColor(0, 0, 255);
+        renderer->AddActor(sphereActor);
+    }
+
+    cout << "Total Island Points : " << islandPoints.size() << endl;
 }
 
 double PrintingModel::GetLongestEdgeLength()

@@ -7,6 +7,8 @@
 
 #include "vtk_header_files.h"
 
+#include "QVoxelizationOptionDialog.h"
+
 class PrintingModel;
 
 class QVTKWidgetWindow : public QMainWindow
@@ -29,12 +31,14 @@ public slots:
     void OnMenuActionAnalyzeOverhangVertexNormal();
     void OnMenuActionAnalyzeOverhangFaceNormal();
     void OnMenuActionAnalyzeVoxelize();
+    void OnMenuActionAnalyzeFindIsland();
     void OnSlider1ValueChaned(int value);
     void OnSlider2ValueChaned(int value);
     void OnSlider3ValueChaned(int value);
 
 protected:
     PrintingModel* printingModel = nullptr;
+    QVoxelizationOptionDialog* voxelizationOptionDialog = nullptr;
 
 public:
     void LoadModel(const QString& fileName);

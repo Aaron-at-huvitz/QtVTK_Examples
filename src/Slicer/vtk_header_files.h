@@ -20,6 +20,7 @@
 #include <vtkPointData.h>
 #include <vtkCellData.h>
 
+#include <vtkSphereSource.h>
 #include <vtkConeSource.h>
 #include <vtkCubeSource.h>
 #include <vtkVectorText.h>

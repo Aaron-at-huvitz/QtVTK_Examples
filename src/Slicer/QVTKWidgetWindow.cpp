@@ -1,5 +1,6 @@
 #include "QVTKWidgetWindow.h"
 #include "QVTKWidget.h"
+#include "QVoxelizationOptionDialog.h"
 #include "PrintingModel.h"
 
 #include "HVolume.h"
@@ -25,6 +26,12 @@ QVTKWidgetWindow::~QVTKWidgetWindow()
     {
         delete printingModel;
         printingModel = nullptr;
+    }
+
+    if (nullptr != voxelizationOptionDialog)
+    {
+        delete voxelizationOptionDialog;
+        voxelizationOptionDialog = nullptr;
     }
 }
 
@@ -92,6 +99,7 @@ void QVTKWidgetWindow::InitializeMenuBar()
         overhangMenu->addAction("Overhang Vertex Normal (&V)", this, SLOT(OnMenuActionAnalyzeOverhangVertexNormal()));
         overhangMenu->addAction("Overhang Face Normal (&F)", this, SLOT(OnMenuActionAnalyzeOverhangFaceNormal()));
     }
+    analyzeMenu->addAction("Find Island (&I)", this, SLOT(OnMenuActionAnalyzeFindIsland()));
     analyzeMenu->addAction("Voxelize (&V)", this, SLOT(OnMenuActionAnalyzeVoxelize()));
 }
 
@@ -146,12 +154,42 @@ void QVTKWidgetWindow::OnMenuActionAnalyzeVoxelize()
 {
     if (nullptr != printingModel)
     {
-        StopWatch::Start("Voxelize");
+        if (nullptr != voxelizationOptionDialog)
+        {
+            delete voxelizationOptionDialog;
+            voxelizationOptionDialog = nullptr;
+        }
+        
+        voxelizationOptionDialog = new QVoxelizationOptionDialog(this);
+        voxelizationOptionDialog->setModal(true);
+        voxelizationOptionDialog->exec();
 
-        printingModel->Voxelize(0.2);
+        bool voxelize = voxelizationOptionDialog->Voxelize();
+        double voxelSize = voxelizationOptionDialog->VoxelSize();
+
+        delete voxelizationOptionDialog;
+        voxelizationOptionDialog = nullptr;
+
+        if (voxelize)
+        {
+            StopWatch::Start("Voxelize");
+            printingModel->Voxelize(voxelSize);
+            ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+            StopWatch::Stop("Voxelize");
+        }
+    }
+}
+
+void QVTKWidgetWindow::OnMenuActionAnalyzeFindIsland()
+{
+    if (nullptr != printingModel)
+    {
+        StopWatch::Start("Find Island");
+
+        printingModel->AnalyzeIsland();
         ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
 
-        StopWatch::Stop("Voxelize");
+        StopWatch::Stop("Find Island");
     }
 }
 
