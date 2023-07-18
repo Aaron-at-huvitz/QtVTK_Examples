@@ -161,9 +161,9 @@ class HVolume : public HAABB
 public:
 	//HVolume(double voxelSize, const HVector3& minPoint, const HVector3& maxPoint);
 
-	HVolume(double voxelSize, vtkPolyData* rawModelData, vtkPolyData* volumeModelData);
+	HVolume(double voxelSize, vtkPolyData* initialModelData, vtkPolyData* volumeModelData);
 
-	void Initialize(vtkPolyData* rawModelData);
+	void Initialize(vtkPolyData* initialModelData);
 
 	void InitializeVTK(vtkPolyData* volumeModelData);
 
@@ -200,12 +200,12 @@ public:
 	inline vtkPolyData* GetPolyData() { return volumeModelData; }
 
 protected:
-	double voxelSize = 0.0;
+	double voxelSize = 0.5;
 	int resolutionX = 0;
 	int resolutionY = 0;
 	int resolutionZ = 0;
 
 	std::vector<HVoxel> voxels;
-	vtkPolyData* rawModelData = nullptr;
+	vtkPolyData* initialModelData = nullptr;
 	vtkPolyData* volumeModelData = nullptr;
 };

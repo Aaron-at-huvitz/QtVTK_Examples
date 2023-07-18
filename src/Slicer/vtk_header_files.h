@@ -3,6 +3,7 @@
 #include <vtkVersion.h>
 #include <vtkNew.h>
 #include <vtkFloatArray.h>
+#include <vtkUnsignedCharArray.h>
 
 #include <vtkCommand.h>
 #include <vtkQtTableView.h>
@@ -29,6 +30,8 @@
 #include <vtkPolyDataNormals.h>
 #include <vtkDataObjectToTable.h>
 #include <vtkColorTransferFunction.h>
+
+#include <vtkCellPicker.h>
 
 #include <vtkElevationFilter.h>
 #include <vtkAdaptiveSubdivisionFilter.h>

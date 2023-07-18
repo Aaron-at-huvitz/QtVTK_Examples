@@ -107,6 +107,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="HVisualDebugging.cpp" />
     <ClCompile Include="StopWatch.cpp" />
     <ClCompile Include="QVoxelizationOptionDialog.cpp" />
     <QtRcc Include="QVTKWidgetWindow.qrc" />
@@ -115,7 +116,7 @@
     <QtMoc Include="QVTKWidgetWindow.h" />
     <ClCompile Include="HVolume.cpp" />
     <ClCompile Include="ModelClipper.cpp" />
-    <ClCompile Include="PrintingModel.cpp" />
+    <ClCompile Include="HPrintingModel.cpp" />
     <ClCompile Include="QVTKWidget.cpp" />
     <ClCompile Include="QVTKWidgetWindow.cpp" />
     <ClCompile Include="main.cpp" />
@@ -124,9 +125,10 @@
     <QtMoc Include="QVTKWidget.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HVisualDebugging.h" />
     <ClInclude Include="HVolume.h" />
     <ClInclude Include="ModelClipper.h" />
-    <ClInclude Include="PrintingModel.h" />
+    <ClInclude Include="HPrintingModel.h" />
     <ClInclude Include="Qt_header_files.h" />
     <ClInclude Include="StopWatch.h" />
     <QtMoc Include="QVoxelizationOptionDialog.h" />

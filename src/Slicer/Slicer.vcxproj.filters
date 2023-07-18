@@ -43,7 +43,7 @@
     <ClCompile Include="ModelClipper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PrintingModel.cpp">
+    <ClCompile Include="HPrintingModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="HVolume.cpp">
@@ -53,6 +53,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="QVoxelizationOptionDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HVisualDebugging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -82,13 +85,16 @@
     <ClInclude Include="ModelClipper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PrintingModel.h">
+    <ClInclude Include="HPrintingModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HVolume.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StopWatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HVisualDebugging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

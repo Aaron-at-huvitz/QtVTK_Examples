@@ -9,7 +9,8 @@
 
 #include "QVoxelizationOptionDialog.h"
 
-class PrintingModel;
+class HPrintingModel;
+class HVisualDebugging;
 
 class QVTKWidgetWindow : public QMainWindow
 {
@@ -26,6 +27,9 @@ private:
     void InitializeMenuBar();
     void InitializeSliders();
 
+    void mousePressEvent(QMouseEvent* event);
+    void mouseReleaseEvent(QMouseEvent* event);
+
 public slots:
     void OnMenuActionOpen();
     void OnMenuActionAnalyzeOverhangVertexNormal();
@@ -36,8 +40,9 @@ public slots:
     void OnSlider2ValueChaned(int value);
     void OnSlider3ValueChaned(int value);
 
+
 protected:
-    PrintingModel* printingModel = nullptr;
+    HPrintingModel* printingModel = nullptr;
     QVoxelizationOptionDialog* voxelizationOptionDialog = nullptr;
 
 public:

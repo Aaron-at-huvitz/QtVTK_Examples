@@ -9,3 +9,4 @@
 #include <QFileDialog>
 #include <QVTKOpenGLNativeWidget.h>
 #include <QSlider>
+#include <QMouseEvent>

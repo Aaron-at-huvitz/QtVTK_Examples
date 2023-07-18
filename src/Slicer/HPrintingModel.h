@@ -4,11 +4,11 @@
 
 #include "HVolume.h"
 
-class PrintingModel
+class HPrintingModel
 {
 public:
-	PrintingModel(vtkRenderer* renderer);
-	virtual ~PrintingModel();
+	HPrintingModel(vtkRenderer* renderer);
+	virtual ~HPrintingModel();
 
 	void LoadModel(const QString& fileName);
 	void ClearAll();
@@ -16,7 +16,7 @@ public:
 	void ClearRemeshedModel();
 	void ClearOverhangModel();
 	void ClearVolumeModel();
-	void ClearRawModel();
+	void ClearInitialModel();
 
 	void Voxelize(double voxelSize);
 
@@ -26,9 +26,11 @@ public:
 	double GetLongestEdgeLength();
 	void Remesh(double edgeLength);
 
-	inline vtkPolyData* GetRawModelData() const { return rawModelData; }
-	inline vtkPolyDataMapper* GetRawModelMapper() const { return rawModelMapper; }
-	inline vtkActor* GetRawModelActor() const { return rawModelActor; }
+	void Pick(double x, double y);
+
+	inline vtkPolyData* GetInitialModelData() const { return initialModelData; }
+	inline vtkPolyDataMapper* GetInitialModelMapper() const { return initialModelMapper; }
+	inline vtkActor* GetInitialModelActor() const { return initialModelActor; }
 
 	inline vtkPolyData* GetRemeshedModelData() const { return remeshedModelData; }
 	inline vtkPolyDataMapper* GetRemeshedModelMapper() const { return remeshedModelMapper; }
@@ -41,9 +43,9 @@ public:
 protected:
 	vtkRenderer* renderer = nullptr;
 	
-	vtkPolyData* rawModelData = nullptr;
-	vtkPolyDataMapper* rawModelMapper = nullptr;
-	vtkActor* rawModelActor = nullptr;
+	vtkPolyData* initialModelData = nullptr;
+	vtkPolyDataMapper* initialModelMapper = nullptr;
+	vtkActor* initialModelActor = nullptr;
 
 	vtkPolyData* overhangModelData = nullptr;
 	vtkPolyDataMapper* overhangModelMapper = nullptr;

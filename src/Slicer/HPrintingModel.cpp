@@ -1,19 +1,21 @@
-#include "PrintingModel.h"
+#include "HPrintingModel.h"
+
+#include "HVisualDebugging.h"
 
 #include <map>
 #include <set>
 
-PrintingModel::PrintingModel(vtkRenderer* renderer)
+HPrintingModel::HPrintingModel(vtkRenderer* renderer)
     : renderer(renderer)
 {
 }
 
-PrintingModel::~PrintingModel()
+HPrintingModel::~HPrintingModel()
 {
     this->ClearAll();
 }
 
-void PrintingModel::LoadModel(const QString& fileName)
+void HPrintingModel::LoadModel(const QString& fileName)
 {
     auto extension = fileName.last(3).toLower();
 
@@ -34,17 +36,17 @@ void PrintingModel::LoadModel(const QString& fileName)
     reader->SetFileName(fileName.toStdString().c_str());
     reader->Update();
 
-    rawModelData = vtkPolyData::New();
-    rawModelData->DeepCopy(reader->GetOutput());
+    initialModelData = vtkPolyData::New();
+    initialModelData->DeepCopy(reader->GetOutput());
 
-    rawModelMapper = vtkPolyDataMapper::New();
-    rawModelMapper->SetInputConnection(reader->GetOutputPort());
+    initialModelMapper = vtkPolyDataMapper::New();
+    initialModelMapper->SetInputConnection(reader->GetOutputPort());
 
-    rawModelActor = vtkActor::New();
-    rawModelActor->SetMapper(rawModelMapper);
+    initialModelActor = vtkActor::New();
+    initialModelActor->SetMapper(initialModelMapper);
 
     double bounds[6];
-    rawModelData->GetBounds(bounds);
+    initialModelData->GetBounds(bounds);
     cout << "Model Bounds" << endl;
     cout << "xmin: " << bounds[0] << " xmax: " << bounds[1] <<
             " ymin: " << bounds[2] << " ymax: " << bounds[3] <<
@@ -52,13 +54,13 @@ void PrintingModel::LoadModel(const QString& fileName)
     cout << "xlength : " << bounds[1] - bounds[0] << ", ylength : " << bounds[3] - bounds[2] << ", zlength : " << bounds[5] - bounds[4] << endl;
 
     double center[3];
-    rawModelData->GetCenter(center);
+    initialModelData->GetCenter(center);
     cout << "Model Center : " << center[0] << ", " << center[1] << ", " << center[2] << endl;
 
     reader->Delete();
 }
 
-void PrintingModel::ClearAll()
+void HPrintingModel::ClearAll()
 {
     if (nullptr != volume)
     {
@@ -72,10 +74,10 @@ void PrintingModel::ClearAll()
 
     ClearVolumeModel();
 
-    ClearRawModel();
+    ClearInitialModel();
 }
 
-void PrintingModel::ClearRemeshedModel()
+void HPrintingModel::ClearRemeshedModel()
 {
     if (nullptr != remeshedModelData)
     {
@@ -97,7 +99,7 @@ void PrintingModel::ClearRemeshedModel()
     }
 }
 
-void PrintingModel::ClearOverhangModel()
+void HPrintingModel::ClearOverhangModel()
 {
     if (nullptr != overhangModelData)
     {
@@ -119,7 +121,7 @@ void PrintingModel::ClearOverhangModel()
     }
 }
 
-void PrintingModel::ClearVolumeModel()
+void HPrintingModel::ClearVolumeModel()
 {
     if (nullptr != volumeModelData)
     {
@@ -141,29 +143,29 @@ void PrintingModel::ClearVolumeModel()
     }
 }
 
-void PrintingModel::ClearRawModel()
+void HPrintingModel::ClearInitialModel()
 {
-    if (nullptr != rawModelData)
+    if (nullptr != initialModelData)
     {
-        rawModelData->Delete();
-        rawModelData = nullptr;
+        initialModelData->Delete();
+        initialModelData = nullptr;
     }
 
-    if (nullptr != rawModelMapper)
+    if (nullptr != initialModelMapper)
     {
-        rawModelMapper->Delete();
-        rawModelMapper = nullptr;
+        initialModelMapper->Delete();
+        initialModelMapper = nullptr;
     }
 
-    if (nullptr != rawModelActor)
+    if (nullptr != initialModelActor)
     {
-        renderer->RemoveActor(rawModelActor);
-        rawModelActor->Delete();
-        rawModelActor = nullptr;
+        renderer->RemoveActor(initialModelActor);
+        initialModelActor->Delete();
+        initialModelActor = nullptr;
     }
 }
 
-void PrintingModel::Voxelize(double voxelSize)
+void HPrintingModel::Voxelize(double voxelSize)
 {
     ClearVolumeModel();
 
@@ -173,7 +175,7 @@ void PrintingModel::Voxelize(double voxelSize)
     vtkNew<vtkCellArray> voxelsQuads;
     volumeModelData->SetPolys(voxelsQuads);
 
-    volume = new HVolume(voxelSize, rawModelData, volumeModelData);
+    volume = new HVolume(voxelSize, initialModelData, volumeModelData);
 
     volumeModelMapper = vtkPolyDataMapper::New();
     volumeModelMapper->SetInputData(volumeModelData);
@@ -186,12 +188,12 @@ void PrintingModel::Voxelize(double voxelSize)
     renderer->AddActor(volumeModelActor);
 }
 
-void PrintingModel::AnalyzeOverhang(bool faceNormal)
+void HPrintingModel::AnalyzeOverhang(bool faceNormal)
 {
     ClearOverhangModel();
 
     overhangModelData = vtkPolyData::New();
-    overhangModelData->DeepCopy(rawModelData);
+    overhangModelData->DeepCopy(initialModelData);
 
     vtkNew<vtkPolyDataNormals> normals;
     normals->SetInputData(overhangModelData);
@@ -269,18 +271,18 @@ void PrintingModel::AnalyzeOverhang(bool faceNormal)
     overhangModelActor->SetMapper(overhangModelMapper);
 
     renderer->AddActor(overhangModelActor);
-    rawModelActor->VisibilityOff();
+    initialModelActor->VisibilityOff();
 }
 
-void PrintingModel::AnalyzeIsland()
+void HPrintingModel::AnalyzeIsland()
 {
     std::map<vtkIdType, std::set<vtkIdType>> linkedPoints;
     std::map<vtkIdType, vtkIdType> lowestVertex;
 
-    auto noc = rawModelData->GetNumberOfCells();
+    auto noc = initialModelData->GetNumberOfCells();
     for (size_t i = 0; i < noc; i++)
     {
-        auto cell = rawModelData->GetCell(i);
+        auto cell = initialModelData->GetCell(i);
         auto points = cell->GetPointIds();
 
         auto pi0 = points->GetId(0);
@@ -306,7 +308,7 @@ void PrintingModel::AnalyzeIsland()
         linkedPoints[pi2].insert(pi1);
     }
 
-    auto nop = rawModelData->GetNumberOfPoints();
+    auto nop = initialModelData->GetNumberOfPoints();
     for (size_t i = 0; i < nop; i++)
     {
         if (linkedPoints.count(i) == 0)
@@ -317,13 +319,13 @@ void PrintingModel::AnalyzeIsland()
         else
         {
             auto& lps = linkedPoints[i];
-            auto position = rawModelData->GetPoint(i);
+            auto position = initialModelData->GetPoint(i);
             auto zmin = position[2];
             auto zminIndex = i;
             int sameZCount = 0;
             for (auto& pi : lps)
             {
-                auto p = rawModelData->GetPoint(pi);
+                auto p = initialModelData->GetPoint(pi);
                 if (p[2] < zmin) {
                     zminIndex = pi;
                     zmin = p[2];
@@ -354,7 +356,7 @@ void PrintingModel::AnalyzeIsland()
 
     for (auto& i : islandPoints)
     {
-        auto p = rawModelData->GetPoint(i);
+        auto p = initialModelData->GetPoint(i);
         vtkNew<vtkActor> sphereActor;
         sphereActor->SetMapper(sphereMapper);
         sphereActor->SetPosition(p);
@@ -365,24 +367,24 @@ void PrintingModel::AnalyzeIsland()
     cout << "Total Island Points : " << islandPoints.size() << endl;
 }
 
-double PrintingModel::GetLongestEdgeLength()
+double HPrintingModel::GetLongestEdgeLength()
 {
-    if (nullptr != rawModelData)
+    if (nullptr != initialModelData)
     {
         double edgeLength = 0.0;
 
-        auto numberOfPolys = rawModelData->GetNumberOfCells();
+        auto numberOfPolys = initialModelData->GetNumberOfCells();
         for (size_t i = 0; i < numberOfPolys; i++)
         {
-            auto cell = rawModelData->GetCell(i);
+            auto cell = initialModelData->GetCell(i);
             auto pi0 = cell->GetPointId(0);
             auto pi1 = cell->GetPointId(1);
             auto pi2 = cell->GetPointId(2);
 
             double p0[3], p1[3], p2[3];
-            rawModelData->GetPoint(pi0, p0);
-            rawModelData->GetPoint(pi1, p1);
-            rawModelData->GetPoint(pi2, p2);
+            initialModelData->GetPoint(pi0, p0);
+            initialModelData->GetPoint(pi1, p1);
+            initialModelData->GetPoint(pi2, p2);
 
             auto ll0 = vtkMath::Distance2BetweenPoints(p0, p1);
             auto ll1 = vtkMath::Distance2BetweenPoints(p1, p2);
@@ -399,10 +401,10 @@ double PrintingModel::GetLongestEdgeLength()
     return -1.0;
 }
 
-void PrintingModel::Remesh(double edgeLength)
+void HPrintingModel::Remesh(double edgeLength)
 {
     vtkNew<vtkAdaptiveSubdivisionFilter> subdivisionFilter;
-    subdivisionFilter->SetInputData(rawModelData);
+    subdivisionFilter->SetInputData(initialModelData);
     subdivisionFilter->SetMaximumEdgeLength(edgeLength);
     subdivisionFilter->Update();
 
@@ -412,11 +414,11 @@ void PrintingModel::Remesh(double edgeLength)
         remeshedModelMapper = nullptr;
     }
 
-    if (nullptr != rawModelActor)
+    if (nullptr != initialModelActor)
     {
-        renderer->RemoveActor(rawModelActor);
-        rawModelActor->Delete();
-        rawModelActor = nullptr;
+        renderer->RemoveActor(initialModelActor);
+        initialModelActor->Delete();
+        initialModelActor = nullptr;
     }
 
     if (nullptr != remeshedModelActor)
@@ -434,4 +436,22 @@ void PrintingModel::Remesh(double edgeLength)
 
     remeshedModelActor = vtkActor::New();
     remeshedModelActor->SetMapper(remeshedModelMapper);
+}
+
+void HPrintingModel::Pick(double x, double y)
+{
+    vtkNew<vtkCellPicker> picker;
+
+    picker->PickFromListOn();
+    picker->AddPickList(initialModelActor);
+
+    picker->Pick(x, y, 0, renderer);
+    auto pickedActor = picker->GetActor();
+    if (nullptr != pickedActor)
+    {
+        auto pickPosition = picker->GetPickPosition();
+        auto cellId = picker->GetCellId();
+        cout << "cellId:" << cellId << ", pickPosition x: " << pickPosition[0] << ", " << pickPosition[1] << ", " << pickPosition[2] << endl;
+        HVisualDebugging::AddSphere(pickPosition, 1, 255, 0, 0);
+    }
 }

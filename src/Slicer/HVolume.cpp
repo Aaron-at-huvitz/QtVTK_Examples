@@ -210,11 +210,11 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
 	//	InitializeVTK();
 	//}
 
-HVolume::HVolume(double voxelSize, vtkPolyData* rawModelData, vtkPolyData* volumeModelData)
+HVolume::HVolume(double voxelSize, vtkPolyData* initialModelData, vtkPolyData* volumeModelData)
 	: voxelSize(voxelSize)
 {
 	double bounds[6];
-	rawModelData->GetBounds(bounds);
+	initialModelData->GetBounds(bounds);
 
 	double halfVoxelSize = voxelSize * 0.5;
 
@@ -223,17 +223,17 @@ HVolume::HVolume(double voxelSize, vtkPolyData* rawModelData, vtkPolyData* volum
 	Expand(bounds[0], bounds[2], bounds[4]);
 	Expand(bounds[1], bounds[3], bounds[5]);
 
-	Initialize(rawModelData);
+	Initialize(initialModelData);
 	InitializeVTK(volumeModelData);
 }
 
-void HVolume::Initialize(vtkPolyData* rawModelData)
+void HVolume::Initialize(vtkPolyData* initialModelData)
 {
-	this->rawModelData = rawModelData;
+	this->initialModelData = initialModelData;
 
-	auto cells = rawModelData->GetPolys();
+	auto cells = initialModelData->GetPolys();
 	auto noc = cells->GetNumberOfCells();
-	auto points = rawModelData->GetPoints();
+	auto points = initialModelData->GetPoints();
 	auto nop = points->GetNumberOfPoints();
 
 	double rX = GetXLength() / voxelSize;
@@ -278,7 +278,7 @@ void HVolume::Initialize(vtkPolyData* rawModelData)
 
 	for (int i = 0; i < noc; i++)
 	{
-		auto cell = rawModelData->GetCell(i);
+		auto cell = initialModelData->GetCell(i);
 		auto pi0 = cell->GetPointId(0);
 		auto pi1 = cell->GetPointId(1);
 		auto pi2 = cell->GetPointId(2);

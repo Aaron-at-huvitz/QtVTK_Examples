@@ -1,12 +1,13 @@
 #include "QVTKWidgetWindow.h"
 #include "QVTKWidget.h"
 #include "QVoxelizationOptionDialog.h"
-#include "PrintingModel.h"
+#include "HPrintingModel.h"
+#include "HVisualDebugging.h"
 
 #include "HVolume.h"
 #include "StopWatch.h"
 
-QVTKWidgetWindow::QVTKWidgetWindow(QWidget *parent)
+QVTKWidgetWindow::QVTKWidgetWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
@@ -22,6 +23,8 @@ QVTKWidgetWindow::QVTKWidgetWindow(QWidget *parent)
 
 QVTKWidgetWindow::~QVTKWidgetWindow()
 {
+    HVisualDebugging::Terminate();
+
     if (nullptr != printingModel)
     {
         delete printingModel;
@@ -44,6 +47,7 @@ void QVTKWidgetWindow::InitializeVTK()
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->setRenderWindow(renderWindow);
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->AddRenderer(renderer);
 
+    HVisualDebugging::Initialize(renderer);
 
 
 
@@ -208,6 +212,49 @@ void QVTKWidgetWindow::OnSlider3ValueChaned(int value)
     cout << "slider3 : " << value << endl;
 }
 
+void QVTKWidgetWindow::mousePressEvent(QMouseEvent* event)
+{
+    //cout << "mouse press event" << endl;
+}
+
+void QVTKWidgetWindow::mouseReleaseEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton) {
+        cout << "mouse release event" << endl;
+
+        if (nullptr != printingModel)
+        {
+            auto vtkNativeWidget = ui.vtkWidget->GetVTKOpenGLNativeWidget();
+
+            auto pos = event->pos();
+            
+            pos = ui.vtkWidget->mapFromParent(pos);
+            pos = vtkNativeWidget->mapFromParent(pos);
+            pos = ui.centralWidget->mapFromParent(pos);
+
+            int qtX = pos.x();
+            int qtY = pos.y();
+
+            int vtkWidgetWidth = vtkNativeWidget->width();
+            int vtkWidgetHeight = vtkNativeWidget->height();
+
+            auto renderers = vtkNativeWidget->renderWindow()->GetRenderers();
+            auto renderer = renderers->GetFirstRenderer();
+            int rendererWidth = renderer->GetSize()[0];
+            int rendererHeight = renderer->GetSize()[1];
+
+            double scaleX = (double)rendererWidth / vtkWidgetWidth;
+            double scaleY = (double)rendererHeight / vtkWidgetHeight;
+
+            double vtkX = qtX * scaleX;
+            double vtkY = (vtkWidgetHeight - qtY) * scaleY;
+
+            printingModel->Pick(vtkX, vtkY);
+
+            vtkNativeWidget->renderWindow()->Render();
+        }
+    }
+}
 
 void QVTKWidgetWindow::LoadModel(const QString& fileName)
 {
@@ -225,7 +272,9 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
     }
     renderer = renderers->GetFirstRenderer();
 
-    printingModel = new PrintingModel(renderer);
+    HVisualDebugging::Terminate();
+
+    printingModel = new HPrintingModel(renderer);
     printingModel->LoadModel(fileName);
 
     //auto longestEdgeLength = printingModel->GetLongestEdgeLength();
@@ -233,7 +282,19 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
     //printingModel->Remesh(0.2);
     //renderer->AddActor(printingModel->GetRemeshedModelActor());
 
-    renderer->AddActor(printingModel->GetRawModelActor());
+    renderer->AddActor(printingModel->GetInitialModelActor());
 
     renderer->ResetCamera();
+
+    auto bounds = printingModel->GetInitialModelActor()->GetBounds();
+
+    HVisualDebugging::Initialize(renderer);
+    
+    HVector3 pO{ 0.0, 0.0, 0.0 };
+    HVector3 pX{ (bounds[1] - bounds[0]) * 2, 0.0, 0.0};
+    HVector3 pY{ 0.0, (bounds[3] - bounds[2]) * 2, 0.0 };
+    HVector3 pZ{ 0.0, 0.0, (bounds[5] - bounds[4]) * 2 };
+    HVisualDebugging::AddLine((double*)&pO, (double*)&pX, 255, 0, 0);
+    HVisualDebugging::AddLine((double*)&pO, (double*)&pY, 0, 255, 0);
+    HVisualDebugging::AddLine((double*)&pO, (double*)&pZ, 0, 0, 255);
 }

@@ -54,14 +54,16 @@ StopWatch::StopWatch()
 
 StopWatch::~StopWatch()
 {
-	for (auto kvp : s_stopWatches) {
-		if (kvp.second != nullptr) {
-			//kvp.second->Stop();
-			delete kvp.second;
-			kvp.second = nullptr;
+	if (s_stopWatches.size() > 0) {
+		for (auto kvp : s_stopWatches) {
+			if (kvp.second != nullptr) {
+				//kvp.second->Stop();
+				delete kvp.second;
+				kvp.second = nullptr;
+			}
 		}
+		s_stopWatches.clear();
 	}
-	s_stopWatches.clear();
 }
 
 StopWatchElement* StopWatch::GetStopWatch(const string& key)
