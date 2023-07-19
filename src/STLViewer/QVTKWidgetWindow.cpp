@@ -30,44 +30,98 @@ void QVTKWidgetWindow::InitializeVTK()
 
 
 
-    vtkNew<vtkVectorText> textSource;
-    textSource->SetText("Slicer");
 
-    vtkNew<vtkLinearExtrusionFilter> extrudeFilter;
-    extrudeFilter->SetInputConnection(textSource->GetOutputPort());
-    extrudeFilter->SetExtrusionTypeToVectorExtrusion();
-    extrudeFilter->SetVector(0, 0, 1);
-    extrudeFilter->SetScaleFactor(0.5);
-    extrudeFilter->CappingOn();
 
-    //vtkNew<vtkContourFilter> contourFilter;
-    //contourFilter->SetInputData(extrudeFilter->GetOutput());
-    //contourFilter->GenerateValues(1, 0.0, 0.0);
+    vtkNew<vtkNamedColors> colors;
 
-    vtkNew<vtkPolyDataMapper> textMapper;
-    textMapper->SetInputConnection(textSource->GetOutputPort());
+    // Create some spheres
+    vtkNew<vtkSphereSource> sphereSource1;
+    sphereSource1->Update();
 
-    vtkNew<vtkPolyDataMapper> extrudeMapper;
-    extrudeMapper->SetInputConnection(extrudeFilter->GetOutputPort());
+    vtkNew<vtkSphereSource> sphereSource2;
+    sphereSource2->SetCenter(5, 0, 0);
+    sphereSource2->Update();
 
-    //vtkNew<vtkPolyDataMapper> contourMapper;
-    //contourMapper->SetInputConnection(contourFilter->GetOutputPort());
+    vtkNew<vtkSphereSource> sphereSource3;
+    sphereSource3->SetCenter(10, 0, 0);
+    sphereSource3->Update();
 
-    vtkNew<vtkActor> textActor;
-    textActor->SetMapper(textMapper);
+    vtkNew<vtkAppendPolyData> appendFilter;
+    appendFilter->AddInputConnection(sphereSource1->GetOutputPort());
+    appendFilter->AddInputConnection(sphereSource2->GetOutputPort());
+    appendFilter->AddInputConnection(sphereSource3->GetOutputPort());
+    appendFilter->Update();
 
-    vtkNew<vtkActor> extrudeActor;
-    extrudeActor->SetMapper(extrudeMapper);
+    vtkNew<vtkPolyDataConnectivityFilter> connectivityFilter;
+    connectivityFilter->SetInputConnection(appendFilter->GetOutputPort());
+    connectivityFilter->SetExtractionModeToAllRegions();
+    connectivityFilter->ColorRegionsOn();
+    connectivityFilter->Update();
 
-    //vtkNew<vtkActor> contourActor;
-    //contourActor->SetMapper(contourMapper);
-    //contourActor->GetProperty()->SetColor(1.0, 0.0, 0.0);
+    // Visualize
+    vtkNew<vtkPolyDataMapper> mapper;
+    mapper->SetInputConnection(connectivityFilter->GetOutputPort());
+    mapper->SetScalarRange(connectivityFilter->GetOutput()
+        ->GetPointData()
+        ->GetArray("RegionId")
+        ->GetRange());
+    mapper->Update();
 
-    renderer->AddActor(textActor);
-    renderer->AddActor(extrudeActor);
-    //renderer->AddActor(contourActor);
+    vtkNew<vtkActor> actor;
+    actor->SetMapper(mapper);
 
-    renderer->ResetCamera();
+    renderer->AddActor(actor);
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //vtkNew<vtkVectorText> textSource;
+    //textSource->SetText("Slicer");
+
+    //vtkNew<vtkLinearExtrusionFilter> extrudeFilter;
+    //extrudeFilter->SetInputConnection(textSource->GetOutputPort());
+    //extrudeFilter->SetExtrusionTypeToVectorExtrusion();
+    //extrudeFilter->SetVector(0, 0, 1);
+    //extrudeFilter->SetScaleFactor(0.5);
+    //extrudeFilter->CappingOn();
+
+    ////vtkNew<vtkContourFilter> contourFilter;
+    ////contourFilter->SetInputData(extrudeFilter->GetOutput());
+    ////contourFilter->GenerateValues(1, 0.0, 0.0);
+
+    //vtkNew<vtkPolyDataMapper> textMapper;
+    //textMapper->SetInputConnection(textSource->GetOutputPort());
+
+    //vtkNew<vtkPolyDataMapper> extrudeMapper;
+    //extrudeMapper->SetInputConnection(extrudeFilter->GetOutputPort());
+
+    ////vtkNew<vtkPolyDataMapper> contourMapper;
+    ////contourMapper->SetInputConnection(contourFilter->GetOutputPort());
+
+    //vtkNew<vtkActor> textActor;
+    //textActor->SetMapper(textMapper);
+
+    //vtkNew<vtkActor> extrudeActor;
+    //extrudeActor->SetMapper(extrudeMapper);
+
+    ////vtkNew<vtkActor> contourActor;
+    ////contourActor->SetMapper(contourMapper);
+    ////contourActor->GetProperty()->SetColor(1.0, 0.0, 0.0);
+
+    //renderer->AddActor(textActor);
+    //renderer->AddActor(extrudeActor);
+    ////renderer->AddActor(contourActor);
+
+    //renderer->ResetCamera();
 }
 
 void QVTKWidgetWindow::InitializeMenuBar()

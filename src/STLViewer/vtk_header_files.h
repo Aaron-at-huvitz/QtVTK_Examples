@@ -1,24 +1,64 @@
 #pragma once
 
-#include <vtkCamera.h>
-#include <vtkCommand.h>
-#include <vtkConeSource.h>
-#include <vtkCubeSource.h>
-#include <vtkDataObjectToTable.h>
-#include <vtkElevationFilter.h>
-#include <vtkGenericOpenGLRenderWindow.h>
-#include <vtkNamedColors.h>
+#include <vtkVersion.h>
 #include <vtkNew.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkProperty.h>
+#include <vtkFloatArray.h>
+#include <vtkUnsignedCharArray.h>
+
+#include <vtkCommand.h>
 #include <vtkQtTableView.h>
 #include <vtkRenderWindow.h>
+#include <vtkGenericOpenGLRenderWindow.h>
+
 #include <vtkRenderer.h>
 #include <vtkRendererCollection.h>
-#include <vtkVersion.h>
+
+#include <vtkNamedColors.h>
+#include <vtkProperty.h>
+#include <vtkProperty2D.h>
+
+#include <vtkCamera.h>
+#include <vtkQuad.h>
+#include <vtkPointData.h>
+#include <vtkCellData.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkPolyData.h>
+#include <vtkAppendPolyData.h>
+
+#include <vtkSphereSource.h>
+#include <vtkConeSource.h>
+#include <vtkCubeSource.h>
+#include <vtkVectorText.h>
+
+#include <vtkPolyDataMapper.h>
+#include <vtkDataSetMapper.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkDataObjectToTable.h>
+#include <vtkColorTransferFunction.h>
+
+#include <vtkActor.h>
+#include <vtkAssembly.h>
+#include <vtkTextActor.h>
+#include <vtkTextActor3D.h>
+#include <vtkAxesActor.h>
+#include <vtkCaptionActor2D.h>
+#include <vtkTextProperty.h>
+
+#include <vtkCellPicker.h>
+#include <vtkPropPicker.h>
+
+#include <vtkSelectionNode.h>
+#include <vtkExtractSelection.h>
+
+#include <vtkAnnotatedCubeActor.h>
+#include <vtkOrientationMarkerWidget.h>
+
+#include <vtkPolyDataConnectivityFilter.h>
+#include <vtkElevationFilter.h>
+#include <vtkAdaptiveSubdivisionFilter.h>
+#include <vtkLinearExtrusionFilter.h>
+#include <vtkContourFilter.h>
+
 #include <vtkSTLReader.h>
 #include <vtkOBJReader.h>
 #include <vtkPLYReader.h>
-#include <vtkVectorText.h>
-#include <vtkLinearExtrusionFilter.h>
-#include <vtkContourFilter.h>

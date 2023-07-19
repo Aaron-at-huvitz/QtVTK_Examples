@@ -22,6 +22,8 @@
 #include <vtkPointData.h>
 #include <vtkCellData.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkPolyData.h>
+#include <vtkAppendPolyData.h>
 
 #include <vtkSphereSource.h>
 #include <vtkConeSource.h>
@@ -51,6 +53,7 @@
 #include <vtkAnnotatedCubeActor.h>
 #include <vtkOrientationMarkerWidget.h>
 
+#include <vtkPolyDataConnectivityFilter.h>
 #include <vtkElevationFilter.h>
 #include <vtkAdaptiveSubdivisionFilter.h>
 #include <vtkLinearExtrusionFilter.h>
