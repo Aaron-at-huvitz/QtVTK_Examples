@@ -15,6 +15,7 @@
 
 #include <vtkNamedColors.h>
 #include <vtkProperty.h>
+#include <vtkProperty2D.h>
 
 #include <vtkCamera.h>
 #include <vtkQuad.h>
@@ -33,11 +34,22 @@
 #include <vtkDataObjectToTable.h>
 #include <vtkColorTransferFunction.h>
 
+#include <vtkActor.h>
+#include <vtkAssembly.h>
+#include <vtkTextActor.h>
+#include <vtkTextActor3D.h>
+#include <vtkAxesActor.h>
+#include <vtkCaptionActor2D.h>
+#include <vtkTextProperty.h>
+
 #include <vtkCellPicker.h>
 #include <vtkPropPicker.h>
 
 #include <vtkSelectionNode.h>
 #include <vtkExtractSelection.h>
+
+#include <vtkAnnotatedCubeActor.h>
+#include <vtkOrientationMarkerWidget.h>
 
 #include <vtkElevationFilter.h>
 #include <vtkAdaptiveSubdivisionFilter.h>

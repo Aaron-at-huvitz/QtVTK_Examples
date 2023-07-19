@@ -220,10 +220,10 @@ HVolume::HVolume(double voxelSize, vtkPolyData* initialModelData, vtkPolyData* v
 
 	double halfVoxelSize = voxelSize * 0.5;
 
-	//Expand(bounds[0] - halfVoxelSize, bounds[2] - halfVoxelSize, bounds[4] - halfVoxelSize);
-	//Expand(bounds[1] + halfVoxelSize, bounds[3] + halfVoxelSize, bounds[5] + halfVoxelSize);
-	Expand(bounds[0], bounds[2], bounds[4]);
-	Expand(bounds[1], bounds[3], bounds[5]);
+	Expand(bounds[0] - halfVoxelSize, bounds[2] - halfVoxelSize, bounds[4] - halfVoxelSize);
+	Expand(bounds[1] + halfVoxelSize, bounds[3] + halfVoxelSize, bounds[5] + halfVoxelSize);
+	//Expand(bounds[0], bounds[2], bounds[4]);
+	//Expand(bounds[1], bounds[3], bounds[5]);
 
 	Initialize(initialModelData);
 	InitializeVTK(volumeModelData);
@@ -277,6 +277,7 @@ void HVolume::Initialize(vtkPolyData* initialModelData)
 			}
 		}
 	}
+	int maxCellCount = 0;
 
 	for (int i = 0; i < noc; i++)
 	{
@@ -315,10 +316,14 @@ void HVolume::Initialize(vtkPolyData* initialModelData)
 						voxel.SetOccupied(true);
 						voxel.SetCellId(i);
 						intersected = true;
+
+						if (maxCellCount < voxel.cellIds.size())
+							maxCellCount = voxel.cellIds.size();
 					}
 				}
 			}
 		}
+
 		if (intersected == false)
 		{
 			cout << "No intersects cellIndex : " << i << endl;
@@ -329,6 +334,8 @@ void HVolume::Initialize(vtkPolyData* initialModelData)
 			cout << "tmaxIndex : " << tmaxIndex.x << ", " << tmaxIndex.y << ", " << tmaxIndex.z << endl << endl;
 		}
 	}
+
+	cout << "Maximum cell count in a voxel: " << maxCellCount << endl;
 }
 
 void HVolume::InitializeVTK(vtkPolyData* volumeModelData)

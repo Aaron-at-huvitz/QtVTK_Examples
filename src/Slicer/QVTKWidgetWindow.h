@@ -30,6 +30,9 @@ private:
     void mousePressEvent(QMouseEvent* event);
     void mouseReleaseEvent(QMouseEvent* event);
 
+    void keyPressEvent(QKeyEvent* event);
+    void keyReleaseEvent(QKeyEvent* event);
+
 public slots:
     void OnMenuActionOpen();
     void OnMenuActionAnalyzeOverhangVertexNormal();
@@ -44,6 +47,11 @@ public slots:
 protected:
     HPrintingModel* printingModel = nullptr;
     QVoxelizationOptionDialog* voxelizationOptionDialog = nullptr;
+    vtkOrientationMarkerWidget* orientationMarkerWidget = nullptr;
+
+    QPoint lastMouseLButtonPosition;
+    QPoint lastMouseRButtonPosition;
+    QPoint lastMouseMButtonPosition;
 
 public:
     void LoadModel(const QString& fileName);

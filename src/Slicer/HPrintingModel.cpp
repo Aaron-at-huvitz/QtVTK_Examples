@@ -224,7 +224,20 @@ void HPrintingModel::AnalyzeOverhang(bool faceNormal)
 
             double gravity[3] = { 0.0, 0.0, -1.0 };
             auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors(normal, gravity));
-            //if (angle < 45) angle = 45;
+            //if (angle < 45.0) angle = 45.0;
+
+            if (angle < 45.0)
+            {
+                auto cell = polyDataWithNormal->GetCell(i);
+                double p0[3], p1[3], p2[3];
+                cell->GetPoints()->GetPoint(0, p0);
+                cell->GetPoints()->GetPoint(1, p1);
+                cell->GetPoints()->GetPoint(2, p2);
+
+                auto ratio = (90.0 - angle) / 90.0;
+
+                HVisualDebugging::AddTriangle(p0, p1, p2, 255 * ratio, 255 * (1 - ratio), 255 * (1 - ratio));
+            }
 
             overhangIntensity->InsertNextValue(angle);
         }
@@ -240,7 +253,7 @@ void HPrintingModel::AnalyzeOverhang(bool faceNormal)
             auto normal = pointNormals->GetTuple(i);
             double gravity[3] = { 0.0, 0.0, -1.0 };
             auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors(normal, gravity));
-            //if (angle < 45) angle = 45;
+            //if (angle < 45.0) angle = 45.0;
 
             overhangIntensity->InsertNextValue(angle);
         }
@@ -458,120 +471,174 @@ void HPrintingModel::Pick(double x, double y)
         auto subId = picker->GetSubId();
         cout << "cellId: " << cellId << " subId: " << subId << endl;
         cout << "pickPosition: " << pickPosition[0] << ", " << pickPosition[1] << ", " << pickPosition[2] << endl;
-        HVisualDebugging::AddSphere(pickPosition, 0.125, 255, 0, 0);
+        HVisualDebugging::AddSphere(pickPosition, 0.25, 255, 0, 0);
 
 
-        auto cell = initialModelData->GetCell(cellId);
-        auto points = cell->GetPoints();
+//        auto cell = initialModelData->GetCell(cellId);
+//        auto points = cell->GetPoints();
+//
+//        double p0[3], p1[3], p2[3];
+//        points->GetPoint(0, p0);
+//        points->GetPoint(1, p1);
+//        points->GetPoint(2, p2);
+//
+//        cout << "p0 x: " << p0[0] << ", y:" << p0[1] << ", z: " << p0[2] << endl;
+//        cout << "p1 x: " << p1[0] << ", y:" << p1[1] << ", z: " << p1[2] << endl;
+//        cout << "p2 x: " << p2[0] << ", y:" << p2[1] << ", z: " << p2[2] << endl;
+//        
+//#pragma region Selection Display
+//        //vtkNew<vtkNamedColors> colors;
+////vtkSmartPointer<vtkDataSetMapper> selectedMapper = vtkSmartPointer<vtkDataSetMapper>::New();
+////vtkSmartPointer<vtkActor>selectedActor = vtkSmartPointer<vtkActor>::New();
+//
+////vtkNew<vtkIdTypeArray> ids;
+////ids->SetNumberOfComponents(1);
+////ids->InsertNextValue(cellId);
+//
+////vtkNew<vtkSelectionNode> selectionNode;
+////selectionNode->SetFieldType(vtkSelectionNode::CELL);
+////selectionNode->SetContentType(vtkSelectionNode::INDICES);
+////selectionNode->SetSelectionList(ids);
+//
+////vtkNew<vtkSelection> selection;
+////selection->AddNode(selectionNode);
+//
+////vtkNew<vtkExtractSelection> extractSelection;
+////extractSelection->SetInputData(0, initialModelData);
+////extractSelection->SetInputData(1, selection);
+////extractSelection->Update();
+//
+////// In selection
+////vtkNew<vtkUnstructuredGrid> selected;
+////selected->ShallowCopy(extractSelection->GetOutput());
+//
+////std::cout << "Number of points in the selection: "
+////    << selected->GetNumberOfPoints() << std::endl;
+////std::cout << "Number of cells in the selection : "
+////    << selected->GetNumberOfCells() << std::endl;
+////selectedMapper->SetInputData(selected);
+////selectedActor->SetMapper(selectedMapper);
+////selectedActor->GetProperty()->EdgeVisibilityOn();
+////selectedActor->GetProperty()->SetColor(
+////    colors->GetColor3d("Tomato").GetData());
+//
+////selectedActor->GetProperty()->SetLineWidth(3);
+//
+////for (size_t i = 0; i < selected->GetNumberOfPoints(); i++)
+////{
+////    auto p = selected->GetPoints()->GetPoint(i);
+////    cout << "p x: " << p[0] << ", y:" << p[1] << ", z: " << p[2] << endl;
+////}
+//
+////auto p0 = selected->GetPoints()->GetPoint(0);
+////auto p1 = selected->GetPoints()->GetPoint(1);
+////auto p2 = selected->GetPoints()->GetPoint(2);
+//
+////cout << "p0 x: " << p0[0] << ", y:" << p0[1] << ", z: " << p0[2] << endl;
+////cout << "p1 x: " << p1[0] << ", y:" << p1[1] << ", z: " << p1[2] << endl;
+////cout << "p2 x: " << p2[0] << ", y:" << p2[1] << ", z: " << p2[2] << endl;
+//
+////renderer->AddActor(selectedActor);
+//#pragma endregion
+//
+//        HAABB aabb;
+//        aabb.Expand(p0[0], p0[1], p0[2]);
+//        aabb.Expand(p1[0], p1[1], p1[2]);
+//        aabb.Expand(p2[0], p2[1], p2[2]);
+//
+//        auto minPoint = aabb.GetMinPoint();
+//        auto maxPoint = aabb.GetMaxPoint();
+//
+//        cout << "minPoint x: " << minPoint.x << ", y:" << minPoint.y << ", z: " << minPoint.z << endl;
+//        cout << "maxPoint x: " << maxPoint.x << ", y:" << maxPoint.y << ", z: " << maxPoint.z << endl;
+//
+//        auto minIndex = volume->GetIndex(aabb.GetMinPoint());
+//        auto maxIndex = volume->GetIndex(aabb.GetMaxPoint());
+//
+//        cout << "minIndex x: " << minIndex.x << ", y:" << minIndex.y << ", z: " << minIndex.z << endl;
+//        cout << "maxIndex x: " << maxIndex.x << ", y:" << maxIndex.y << ", z: " << maxIndex.z << endl;
+//
+//        cout << "x length: " << maxIndex.x - minIndex.x + 1 << ", y length: " << maxIndex.y - minIndex.y + 1 << ", z length: " << maxIndex.z - minIndex.z + 1;
+//
+//        bool intersected = false;
+//        for (size_t z = minIndex.z; z <= maxIndex.z; z++)
+//        {
+//            for (size_t y = minIndex.y; y <= maxIndex.y; y++)
+//            {
+//                for (size_t x = minIndex.x; x <= maxIndex.x; x++)
+//                {
+//                    auto& voxel = volume->GetVoxel(x, y, z);
+//                    if (voxel.IsOccupied()) {
+//                        intersected = true;
+//                        //continue;
+//                    }
+//
+//                    HVector3 tp0{ p0[0], p0[1], p0[2] };
+//                    HVector3 tp1{ p1[0], p1[1], p1[2] };
+//                    HVector3 tp2{ p2[0], p2[1], p2[2] };
+//
+//                    if (voxel.IntersectsTriangle(tp0, tp1, tp2)) {
+//                        cout << "Intersects : " << x << ", " << y << ", " << z << endl;
+//                        voxel.SetOccupied(true);
+//                        voxel.SetCellId(cellId);
+//                        intersected = true;
+//                    }
+//                }
+//            }
+//        }
+    }
+}
 
-        double p0[3], p1[3], p2[3];
-        points->GetPoint(0, p0);
-        points->GetPoint(1, p1);
-        points->GetPoint(2, p2);
+void HPrintingModel::ShowInitialModel(bool bShow)
+{
+    if (nullptr != initialModelActor)
+    {
+        initialModelActor->SetVisibility(bShow);
+        renderer->GetRenderWindow()->Render();
+    }
+}
 
-        cout << "p0 x: " << p0[0] << ", y:" << p0[1] << ", z: " << p0[2] << endl;
-        cout << "p1 x: " << p1[0] << ", y:" << p1[1] << ", z: " << p1[2] << endl;
-        cout << "p2 x: " << p2[0] << ", y:" << p2[1] << ", z: " << p2[2] << endl;
-        
-#pragma region Selection Display
-        //vtkNew<vtkNamedColors> colors;
-//vtkSmartPointer<vtkDataSetMapper> selectedMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-//vtkSmartPointer<vtkActor>selectedActor = vtkSmartPointer<vtkActor>::New();
+void HPrintingModel::ToggleInitialModel()
+{
+    if (nullptr != initialModelActor)
+    {
+        initialModelActor->SetVisibility(!initialModelActor->GetVisibility());
+        renderer->GetRenderWindow()->Render();
+    }
+}
 
-//vtkNew<vtkIdTypeArray> ids;
-//ids->SetNumberOfComponents(1);
-//ids->InsertNextValue(cellId);
+void HPrintingModel::ShowVolumeModel(bool bShow)
+{
+    if (nullptr != volumeModelActor)
+    {
+        volumeModelActor->SetVisibility(bShow);
+        renderer->GetRenderWindow()->Render();
+    }
+}
 
-//vtkNew<vtkSelectionNode> selectionNode;
-//selectionNode->SetFieldType(vtkSelectionNode::CELL);
-//selectionNode->SetContentType(vtkSelectionNode::INDICES);
-//selectionNode->SetSelectionList(ids);
+void HPrintingModel::ToggleVolumeModel()
+{
+    if (nullptr != volumeModelActor)
+    {
+        volumeModelActor->SetVisibility(!volumeModelActor->GetVisibility());
+        renderer->GetRenderWindow()->Render();
+    }
+}
 
-//vtkNew<vtkSelection> selection;
-//selection->AddNode(selectionNode);
+void HPrintingModel::ShowOverhangModel(bool bShow)
+{
+    if (nullptr != overhangModelActor)
+    {
+        overhangModelActor->SetVisibility(bShow);
+        renderer->GetRenderWindow()->Render();
+    }
+}
 
-//vtkNew<vtkExtractSelection> extractSelection;
-//extractSelection->SetInputData(0, initialModelData);
-//extractSelection->SetInputData(1, selection);
-//extractSelection->Update();
-
-//// In selection
-//vtkNew<vtkUnstructuredGrid> selected;
-//selected->ShallowCopy(extractSelection->GetOutput());
-
-//std::cout << "Number of points in the selection: "
-//    << selected->GetNumberOfPoints() << std::endl;
-//std::cout << "Number of cells in the selection : "
-//    << selected->GetNumberOfCells() << std::endl;
-//selectedMapper->SetInputData(selected);
-//selectedActor->SetMapper(selectedMapper);
-//selectedActor->GetProperty()->EdgeVisibilityOn();
-//selectedActor->GetProperty()->SetColor(
-//    colors->GetColor3d("Tomato").GetData());
-
-//selectedActor->GetProperty()->SetLineWidth(3);
-
-//for (size_t i = 0; i < selected->GetNumberOfPoints(); i++)
-//{
-//    auto p = selected->GetPoints()->GetPoint(i);
-//    cout << "p x: " << p[0] << ", y:" << p[1] << ", z: " << p[2] << endl;
-//}
-
-//auto p0 = selected->GetPoints()->GetPoint(0);
-//auto p1 = selected->GetPoints()->GetPoint(1);
-//auto p2 = selected->GetPoints()->GetPoint(2);
-
-//cout << "p0 x: " << p0[0] << ", y:" << p0[1] << ", z: " << p0[2] << endl;
-//cout << "p1 x: " << p1[0] << ", y:" << p1[1] << ", z: " << p1[2] << endl;
-//cout << "p2 x: " << p2[0] << ", y:" << p2[1] << ", z: " << p2[2] << endl;
-
-//renderer->AddActor(selectedActor);
-#pragma endregion
-
-        HAABB aabb;
-        aabb.Expand(p0[0], p0[1], p0[2]);
-        aabb.Expand(p1[0], p1[1], p1[2]);
-        aabb.Expand(p2[0], p2[1], p2[2]);
-
-        auto minPoint = aabb.GetMinPoint();
-        auto maxPoint = aabb.GetMaxPoint();
-
-        cout << "minPoint x: " << minPoint.x << ", y:" << minPoint.y << ", z: " << minPoint.z << endl;
-        cout << "maxPoint x: " << maxPoint.x << ", y:" << maxPoint.y << ", z: " << maxPoint.z << endl;
-
-        auto minIndex = volume->GetIndex(aabb.GetMinPoint());
-        auto maxIndex = volume->GetIndex(aabb.GetMaxPoint());
-
-        cout << "minIndex x: " << minIndex.x << ", y:" << minIndex.y << ", z: " << minIndex.z << endl;
-        cout << "maxIndex x: " << maxIndex.x << ", y:" << maxIndex.y << ", z: " << maxIndex.z << endl;
-
-        cout << "x length: " << maxIndex.x - minIndex.x + 1 << ", y length: " << maxIndex.y - minIndex.y + 1 << ", z length: " << maxIndex.z - minIndex.z + 1;
-
-        bool intersected = false;
-        for (size_t z = minIndex.z; z <= maxIndex.z; z++)
-        {
-            for (size_t y = minIndex.y; y <= maxIndex.y; y++)
-            {
-                for (size_t x = minIndex.x; x <= maxIndex.x; x++)
-                {
-                    auto& voxel = volume->GetVoxel(x, y, z);
-                    if (voxel.IsOccupied()) {
-                        intersected = true;
-                        //continue;
-                    }
-
-                    HVector3 tp0{ p0[0], p0[1], p0[2] };
-                    HVector3 tp1{ p1[0], p1[1], p1[2] };
-                    HVector3 tp2{ p2[0], p2[1], p2[2] };
-
-                    if (voxel.IntersectsTriangle(tp0, tp1, tp2)) {
-                        cout << "Intersects : " << x << ", " << y << ", " << z << endl;
-                        voxel.SetOccupied(true);
-                        voxel.SetCellId(cellId);
-                        intersected = true;
-                    }
-                }
-            }
-        }
+void HPrintingModel::ToggleOverhangModel()
+{
+    if (nullptr != overhangModelActor)
+    {
+        overhangModelActor->SetVisibility(!overhangModelActor->GetVisibility());
+        renderer->GetRenderWindow()->Render();
     }
 }

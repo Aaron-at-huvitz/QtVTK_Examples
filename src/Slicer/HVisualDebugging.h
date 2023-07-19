@@ -8,6 +8,7 @@ class HVisualDebugging
 {
 public:
 	static void AddLine(double* p0, double* p1, unsigned char r, unsigned char g, unsigned char b);
+	static void AddTriangle(double* p0, double* p1, double* p2, unsigned char r, unsigned char g, unsigned char b);
 	static void AddSphere(double* center, double radius, unsigned char r, unsigned char g, unsigned char b);
 
 private:
@@ -27,6 +28,19 @@ private:
 	static vtkActor* s_lineActor;
 	static vtkPolyDataMapper* s_linePolyDataMapper;
 	static vtkPolyData* s_linePolyData;
+
+	static vtkActor* s_triangleActor;
+	static vtkPolyDataMapper* s_trianglePolyDataMapper;
+	static vtkPolyData* s_trianglePolyData;
+
+	static vtkAssembly* s_sphereAssembly;
+
+	static void ShowLines(bool bShow);
+	static void ToggleLines();
+	static void ShowTriangles(bool bShow);
+	static void ToggleTriangles();
+	static void ShowSpheres(bool bShow);
+	static void ToggleSpheres();
 
 public:
 	friend class QVTKWidgetWindow;

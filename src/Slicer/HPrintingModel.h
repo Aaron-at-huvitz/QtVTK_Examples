@@ -28,6 +28,13 @@ public:
 
 	void Pick(double x, double y);
 
+	void ShowInitialModel(bool bShow);
+	void ToggleInitialModel();
+	void ShowVolumeModel(bool bShow);
+	void ToggleVolumeModel();
+	void ShowOverhangModel(bool bShow);
+	void ToggleOverhangModel();
+
 	inline vtkPolyData* GetInitialModelData() const { return initialModelData; }
 	inline vtkPolyDataMapper* GetInitialModelMapper() const { return initialModelMapper; }
 	inline vtkActor* GetInitialModelActor() const { return initialModelActor; }
@@ -39,6 +46,10 @@ public:
 	inline vtkPolyData* GetVolumeModelData() const { return volumeModelData; }
 	inline vtkPolyDataMapper* GetVolumeModelMapper() const { return volumeModelMapper; }
 	inline vtkActor* GetVolumeModelActor() const { return volumeModelActor; }
+
+	inline vtkPolyData* GetOverhangModelData() const { return overhangModelData; }
+	inline vtkPolyDataMapper* GetOverhangModelMapper() const { return overhangModelMapper; }
+	inline vtkActor* GetOverhangModelActor() const { return overhangModelActor; }
 
 protected:
 	vtkRenderer* renderer = nullptr;
