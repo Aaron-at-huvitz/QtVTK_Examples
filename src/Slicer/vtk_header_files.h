@@ -20,6 +20,7 @@
 #include <vtkQuad.h>
 #include <vtkPointData.h>
 #include <vtkCellData.h>
+#include <vtkUnstructuredGrid.h>
 
 #include <vtkSphereSource.h>
 #include <vtkConeSource.h>
@@ -27,11 +28,16 @@
 #include <vtkVectorText.h>
 
 #include <vtkPolyDataMapper.h>
+#include <vtkDataSetMapper.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkDataObjectToTable.h>
 #include <vtkColorTransferFunction.h>
 
 #include <vtkCellPicker.h>
+#include <vtkPropPicker.h>
+
+#include <vtkSelectionNode.h>
+#include <vtkExtractSelection.h>
 
 #include <vtkElevationFilter.h>
 #include <vtkAdaptiveSubdivisionFilter.h>

@@ -71,7 +71,7 @@ void HVisualDebugging::Terminate()
 	}
 }
 
-void HVisualDebugging::AddLine(double* p0, double* p1, char r, char g, char b)
+void HVisualDebugging::AddLine(double* p0, double* p1, unsigned char r, unsigned char g, unsigned char b)
 {
 	auto points = s_linePolyData->GetPoints();
 	auto pi0 = points->InsertNextPoint(p0);
@@ -86,7 +86,7 @@ void HVisualDebugging::AddLine(double* p0, double* p1, char r, char g, char b)
 	scalars->InsertNextTuple3(r, g, b);
 }
 
-void HVisualDebugging::AddSphere(double* center, double radius, char r, char g, char b)
+void HVisualDebugging::AddSphere(double* center, double radius, unsigned char r, unsigned char g, unsigned char b)
 {
 	vtkNew<vtkSphereSource> sphereSource;
 	sphereSource->SetCenter(center);
@@ -97,7 +97,7 @@ void HVisualDebugging::AddSphere(double* center, double radius, char r, char g, 
 
 	vtkNew<vtkActor> sphereActor;
 	sphereActor->SetMapper(sphereMapper);
-	sphereActor->GetProperty()->SetColor((double)r, (double)g, (double)b);
+	sphereActor->GetProperty()->SetColor(static_cast<double>(r) / 255.0, static_cast<double>(g) / 255.0, static_cast<double>(b) / 255.0);
 
 	s_renderer->AddActor(sphereActor);
 }

@@ -1,10 +1,12 @@
 #include "HVolume.h"
 
-float Max(float a, float b, float c) {
+#define EPSILON 2.2204460492503131e-012
+
+double Max(double a, double b, double c) {
     return std::max(std::max(a, b), c);
 }
 
-float Min(float a, float b, float c) {
+double Min(double a, double b, double c) {
     return std::min(std::min(a, b), c);
 }
 
@@ -77,11 +79,11 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
 
     // Test axis a00
     HVector3 a00 = { 0, -f0.z, f0.y };
-    float p0 = v0.x * a00.x + v0.y * a00.y + v0.z * a00.z;
-    float p1 = v1.x * a00.x + v1.y * a00.y + v1.z * a00.z;
-    float p2 = v2.x * a00.x + v2.y * a00.y + v2.z * a00.z;
-    float r = extents.y * std::abs(f0.z) + extents.z * std::abs(f0.y);
-    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r)
+    double p0 = v0.x * a00.x + v0.y * a00.y + v0.z * a00.z;
+    double p1 = v1.x * a00.x + v1.y * a00.y + v1.z * a00.z;
+    double p2 = v2.x * a00.x + v2.y * a00.y + v2.z * a00.z;
+    double r = extents.y * std::fabs(f0.z) + extents.z * std::fabs(f0.y);
+    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r + EPSILON)
         return false;
 
     // Test axis a01
@@ -89,8 +91,8 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     p0 = v0.x * a01.x + v0.y * a01.y + v0.z * a01.z;
     p1 = v1.x * a01.x + v1.y * a01.y + v1.z * a01.z;
     p2 = v2.x * a01.x + v2.y * a01.y + v2.z * a01.z;
-    r = extents.y * std::abs(f1.z) + extents.z * std::abs(f1.y);
-    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r)
+    r = extents.y * std::fabs(f1.z) + extents.z * std::fabs(f1.y);
+    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r + EPSILON)
         return false;
 
     // Test axis a02
@@ -98,8 +100,8 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     p0 = v0.x * a02.x + v0.y * a02.y + v0.z * a02.z;
     p1 = v1.x * a02.x + v1.y * a02.y + v1.z * a02.z;
     p2 = v2.x * a02.x + v2.y * a02.y + v2.z * a02.z;
-    r = extents.y * std::abs(f2.z) + extents.z * std::abs(f2.y);
-    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r)
+    r = extents.y * std::fabs(f2.z) + extents.z * std::fabs(f2.y);
+    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r + EPSILON)
         return false;
 
     // Test axis a10
@@ -107,8 +109,8 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     p0 = v0.x * a10.x + v0.y * a10.y + v0.z * a10.z;
     p1 = v1.x * a10.x + v1.y * a10.y + v1.z * a10.z;
     p2 = v2.x * a10.x + v2.y * a10.y + v2.z * a10.z;
-    r = extents.x * std::abs(f0.z) + extents.z * std::abs(f0.x);
-    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r)
+    r = extents.x * std::fabs(f0.z) + extents.z * std::fabs(f0.x);
+    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r + EPSILON)
         return false;
 
     // Test axis a11
@@ -116,8 +118,8 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     p0 = v0.x * a11.x + v0.y * a11.y + v0.z * a11.z;
     p1 = v1.x * a11.x + v1.y * a11.y + v1.z * a11.z;
     p2 = v2.x * a11.x + v2.y * a11.y + v2.z * a11.z;
-    r = extents.x * std::abs(f1.z) + extents.z * std::abs(f1.x);
-    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r)
+    r = extents.x * std::fabs(f1.z) + extents.z * std::fabs(f1.x);
+    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r + EPSILON)
         return false;
 
     // Test axis a12
@@ -125,8 +127,8 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     p0 = v0.x * a12.x + v0.y * a12.y + v0.z * a12.z;
     p1 = v1.x * a12.x + v1.y * a12.y + v1.z * a12.z;
     p2 = v2.x * a12.x + v2.y * a12.y + v2.z * a12.z;
-    r = extents.x * std::abs(f2.z) + extents.z * std::abs(f2.x);
-    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r)
+    r = extents.x * std::fabs(f2.z) + extents.z * std::fabs(f2.x);
+    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r + EPSILON)
         return false;
 
     // Test axis a20
@@ -134,8 +136,8 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     p0 = v0.x * a20.x + v0.y * a20.y + v0.z * a20.z;
     p1 = v1.x * a20.x + v1.y * a20.y + v1.z * a20.z;
     p2 = v2.x * a20.x + v2.y * a20.y + v2.z * a20.z;
-    r = extents.x * std::abs(f0.y) + extents.y * std::abs(f0.x);
-    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r)
+    r = extents.x * std::fabs(f0.y) + extents.y * std::fabs(f0.x);
+    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r + EPSILON)
         return false;
 
     // Test axis a21
@@ -143,8 +145,8 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     p0 = v0.x * a21.x + v0.y * a21.y + v0.z * a21.z;
     p1 = v1.x * a21.x + v1.y * a21.y + v1.z * a21.z;
     p2 = v2.x * a21.x + v2.y * a21.y + v2.z * a21.z;
-    r = extents.x * std::abs(f1.y) + extents.y * std::abs(f1.x);
-    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r)
+    r = extents.x * std::fabs(f1.y) + extents.y * std::fabs(f1.x);
+    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r + EPSILON)
         return false;
 
     // Test axis a22
@@ -152,8 +154,8 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     p0 = v0.x * a22.x + v0.y * a22.y + v0.z * a22.z;
     p1 = v1.x * a22.x + v1.y * a22.y + v1.z * a22.z;
     p2 = v2.x * a22.x + v2.y * a22.y + v2.z * a22.z;
-    r = extents.x * std::abs(f2.y) + extents.y * std::abs(f2.x);
-    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r)
+    r = extents.x * std::fabs(f2.y) + extents.y * std::fabs(f2.x);
+    if (std::max(-Max(p0, p1, p2), Min(p0, p1, p2)) > r + EPSILON)
         return false;
 
     //// endregion
@@ -163,24 +165,24 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     // Exit if...
     // ... [-extents.X, extents.X] and [Min(v0.X,v1.X,v2.X), Max(v0.X,v1.X,v2.X)] do not overlap
     if (Max(v0.x, v1.x, v2.x) < -extents.x || Min(v0.x, v1.x, v2.x) > extents.x) {
-		if (Max(v0.x, v1.x, v2.x) - (-extents.x) > DBL_EPSILON ||
-			Min(v0.x, v1.x, v2.x) - (extents.x) > DBL_EPSILON) {
+		if (Max(v0.x, v1.x, v2.x) - (-extents.x) > EPSILON ||
+			Min(v0.x, v1.x, v2.x) - (extents.x) > EPSILON) {
 			return false;
 		}
 	}
 
     // ... [-extents.Y, extents.Y] and [Min(v0.Y,v1.Y,v2.Y), Max(v0.Y,v1.Y,v2.Y)] do not overlap
     if (Max(v0.y, v1.y, v2.y) < -extents.y || Min(v0.y, v1.y, v2.y) > extents.y) {
-		if (Max(v0.y, v1.y, v2.y) - (-extents.y) > DBL_EPSILON ||
-			Min(v0.y, v1.y, v2.y) - (extents.y) > DBL_EPSILON) {
+		if (Max(v0.y, v1.y, v2.y) - (-extents.y) > EPSILON ||
+			Min(v0.y, v1.y, v2.y) - (extents.y) > EPSILON) {
 			return false;
 		}
 	}
 
     // ... [-extents.Z, extents.Z] and [Min(v0.Z,v1.Z,v2.Z), Max(v0.Z,v1.Z,v2.Z)] do not overlap
 	if (Max(v0.z, v1.z, v2.z) < -extents.z || Min(v0.z, v1.z, v2.z) > extents.z) {
-		if (Max(v0.z, v1.z, v2.z) - (-extents.z) > DBL_EPSILON ||
-			Min(v0.z, v1.z, v2.z) - (extents.z) > DBL_EPSILON) {
+		if (Max(v0.z, v1.z, v2.z) - (-extents.z) > EPSILON ||
+			Min(v0.z, v1.z, v2.z) - (extents.z) > EPSILON) {
 			return false;
 		}
 	}
@@ -190,13 +192,13 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     //// region Test separating axis corresponding to triangle face normal (category 2)
 
     HVector3 plane_normal = { f0.y * f1.z - f0.z * f1.y, f0.z * f1.x - f0.x * f1.z, f0.x * f1.y - f0.y * f1.x };
-    float plane_distance = std::abs(plane_normal.x * v0.x + plane_normal.y * v0.y + plane_normal.z * v0.z);
+    double plane_distance = std::fabs(plane_normal.x * v0.x + plane_normal.y * v0.y + plane_normal.z * v0.z);
 
     // Compute the projection interval radius of b onto L(t) = b.c + t * p.n
-    r = extents.x * std::abs(plane_normal.x) + extents.y * std::abs(plane_normal.y) + extents.z * std::abs(plane_normal.z);
+    r = extents.x * std::fabs(plane_normal.x) + extents.y * std::fabs(plane_normal.y) + extents.z * std::fabs(plane_normal.z);
 
     // Intersection occurs when plane distance falls within [-r,+r] interval
-    if (plane_distance > r)
+    if (plane_distance > r + EPSILON)
         return false;
 
     //// endregion

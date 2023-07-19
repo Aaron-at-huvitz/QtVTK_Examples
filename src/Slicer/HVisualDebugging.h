@@ -7,8 +7,8 @@ class QVTKWidgetWindow;
 class HVisualDebugging
 {
 public:
-	static void AddLine(double* p0, double* p1, char r, char g, char b);
-	static void AddSphere(double* center, double radius, char r, char g, char b);
+	static void AddLine(double* p0, double* p1, unsigned char r, unsigned char g, unsigned char b);
+	static void AddSphere(double* center, double radius, unsigned char r, unsigned char g, unsigned char b);
 
 private:
 	HVisualDebugging();
