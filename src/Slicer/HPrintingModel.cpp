@@ -4,6 +4,7 @@
 
 #include <map>
 #include <set>
+#include <random>
 
 HPrintingModel::HPrintingModel(vtkRenderer* renderer)
     : renderer(renderer)
@@ -293,8 +294,6 @@ void HPrintingModel::AnalyzeOverhang()
     renderer->AddActor(overhangModelActor);
     initialModelActor->VisibilityOff();
 
-
-
     {
         vtkNew<vtkPolyDataConnectivityFilter> connectivityFilter;
         connectivityFilter->SetInputData(overhangModelData);
@@ -302,22 +301,52 @@ void HPrintingModel::AnalyzeOverhang()
         connectivityFilter->ColorRegionsOn();
         connectivityFilter->Update();
 
-        cout << "Number of extracted regions: " << connectivityFilter->GetNumberOfExtractedRegions() << endl;
+        int numberOfRegions = connectivityFilter->GetNumberOfExtractedRegions();
+        cout << "Number of extracted regions: " << numberOfRegions << endl;
+
+        vtkNew<vtkLookupTable> lut;
+        lut->SetNumberOfTableValues(std::max(numberOfRegions, 10));
+        lut->Build();
+
+        // Fill in a few known colors, the rest will be generated if needed
+        vtkNew<vtkNamedColors> colors;
+        lut->SetTableValue(0, colors->GetColor4d("Gold").GetData());
+        lut->SetTableValue(1, colors->GetColor4d("Banana").GetData());
+        lut->SetTableValue(2, colors->GetColor4d("Tomato").GetData());
+        lut->SetTableValue(3, colors->GetColor4d("Wheat").GetData());
+        lut->SetTableValue(4, colors->GetColor4d("Lavender").GetData());
+        lut->SetTableValue(5, colors->GetColor4d("Flesh").GetData());
+        lut->SetTableValue(6, colors->GetColor4d("Raspberry").GetData());
+        lut->SetTableValue(7, colors->GetColor4d("Salmon").GetData());
+        lut->SetTableValue(8, colors->GetColor4d("Mint").GetData());
+        lut->SetTableValue(9, colors->GetColor4d("Peacock").GetData());
+        
+        if (numberOfRegions > 9)
+        {
+            std::mt19937 mt(4355412); // Standard mersenne_twister_engine
+            std::uniform_real_distribution<double> distribution(.4, 1.0);
+            for (auto i = 10; i < numberOfRegions; ++i)
+            {
+                lut->SetTableValue(i, distribution(mt), distribution(mt), distribution(mt), 1.0);
+            }
+        }
 
         // Visualize
         vtkNew<vtkPolyDataMapper> mapper;
         mapper->SetInputConnection(connectivityFilter->GetOutputPort());
-        mapper->SetScalarRange(connectivityFilter->GetOutput()
+        /*mapper->SetScalarRange(connectivityFilter->GetOutput()
             ->GetPointData()
             ->GetArray("RegionId")
-            ->GetRange());
+            ->GetRange());*/
+        mapper->SetScalarRange(0, numberOfRegions - 1);
+        mapper->SetLookupTable(lut);
         mapper->Update();
 
-        double bounds[6];
-        overhangModelActor->GetBounds(bounds);
+        //double bounds[6];
+        //overhangModelActor->GetBounds(bounds);
         vtkNew<vtkActor> actor;
         actor->SetMapper(mapper);
-        actor->SetPosition(0, 0, -(bounds[5] - bounds[4]) * 2);
+        //actor->SetPosition(0, 0, -(bounds[5] - bounds[4]) * 2);
         renderer->AddActor(actor);
     }
 }
@@ -507,120 +536,6 @@ void HPrintingModel::Pick(double x, double y)
         cout << "cellId: " << cellId << " subId: " << subId << endl;
         cout << "pickPosition: " << pickPosition[0] << ", " << pickPosition[1] << ", " << pickPosition[2] << endl;
         HVisualDebugging::AddSphere(pickPosition, 0.25, 255, 0, 0);
-
-
-//        auto cell = initialModelData->GetCell(cellId);
-//        auto points = cell->GetPoints();
-//
-//        double p0[3], p1[3], p2[3];
-//        points->GetPoint(0, p0);
-//        points->GetPoint(1, p1);
-//        points->GetPoint(2, p2);
-//
-//        cout << "p0 x: " << p0[0] << ", y:" << p0[1] << ", z: " << p0[2] << endl;
-//        cout << "p1 x: " << p1[0] << ", y:" << p1[1] << ", z: " << p1[2] << endl;
-//        cout << "p2 x: " << p2[0] << ", y:" << p2[1] << ", z: " << p2[2] << endl;
-//        
-//#pragma region Selection Display
-//        //vtkNew<vtkNamedColors> colors;
-////vtkSmartPointer<vtkDataSetMapper> selectedMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-////vtkSmartPointer<vtkActor>selectedActor = vtkSmartPointer<vtkActor>::New();
-//
-////vtkNew<vtkIdTypeArray> ids;
-////ids->SetNumberOfComponents(1);
-////ids->InsertNextValue(cellId);
-//
-////vtkNew<vtkSelectionNode> selectionNode;
-////selectionNode->SetFieldType(vtkSelectionNode::CELL);
-////selectionNode->SetContentType(vtkSelectionNode::INDICES);
-////selectionNode->SetSelectionList(ids);
-//
-////vtkNew<vtkSelection> selection;
-////selection->AddNode(selectionNode);
-//
-////vtkNew<vtkExtractSelection> extractSelection;
-////extractSelection->SetInputData(0, initialModelData);
-////extractSelection->SetInputData(1, selection);
-////extractSelection->Update();
-//
-////// In selection
-////vtkNew<vtkUnstructuredGrid> selected;
-////selected->ShallowCopy(extractSelection->GetOutput());
-//
-////std::cout << "Number of points in the selection: "
-////    << selected->GetNumberOfPoints() << std::endl;
-////std::cout << "Number of cells in the selection : "
-////    << selected->GetNumberOfCells() << std::endl;
-////selectedMapper->SetInputData(selected);
-////selectedActor->SetMapper(selectedMapper);
-////selectedActor->GetProperty()->EdgeVisibilityOn();
-////selectedActor->GetProperty()->SetColor(
-////    colors->GetColor3d("Tomato").GetData());
-//
-////selectedActor->GetProperty()->SetLineWidth(3);
-//
-////for (size_t i = 0; i < selected->GetNumberOfPoints(); i++)
-////{
-////    auto p = selected->GetPoints()->GetPoint(i);
-////    cout << "p x: " << p[0] << ", y:" << p[1] << ", z: " << p[2] << endl;
-////}
-//
-////auto p0 = selected->GetPoints()->GetPoint(0);
-////auto p1 = selected->GetPoints()->GetPoint(1);
-////auto p2 = selected->GetPoints()->GetPoint(2);
-//
-////cout << "p0 x: " << p0[0] << ", y:" << p0[1] << ", z: " << p0[2] << endl;
-////cout << "p1 x: " << p1[0] << ", y:" << p1[1] << ", z: " << p1[2] << endl;
-////cout << "p2 x: " << p2[0] << ", y:" << p2[1] << ", z: " << p2[2] << endl;
-//
-////renderer->AddActor(selectedActor);
-//#pragma endregion
-//
-//        HAABB aabb;
-//        aabb.Expand(p0[0], p0[1], p0[2]);
-//        aabb.Expand(p1[0], p1[1], p1[2]);
-//        aabb.Expand(p2[0], p2[1], p2[2]);
-//
-//        auto minPoint = aabb.GetMinPoint();
-//        auto maxPoint = aabb.GetMaxPoint();
-//
-//        cout << "minPoint x: " << minPoint.x << ", y:" << minPoint.y << ", z: " << minPoint.z << endl;
-//        cout << "maxPoint x: " << maxPoint.x << ", y:" << maxPoint.y << ", z: " << maxPoint.z << endl;
-//
-//        auto minIndex = volume->GetIndex(aabb.GetMinPoint());
-//        auto maxIndex = volume->GetIndex(aabb.GetMaxPoint());
-//
-//        cout << "minIndex x: " << minIndex.x << ", y:" << minIndex.y << ", z: " << minIndex.z << endl;
-//        cout << "maxIndex x: " << maxIndex.x << ", y:" << maxIndex.y << ", z: " << maxIndex.z << endl;
-//
-//        cout << "x length: " << maxIndex.x - minIndex.x + 1 << ", y length: " << maxIndex.y - minIndex.y + 1 << ", z length: " << maxIndex.z - minIndex.z + 1;
-//
-//        bool intersected = false;
-//        for (size_t z = minIndex.z; z <= maxIndex.z; z++)
-//        {
-//            for (size_t y = minIndex.y; y <= maxIndex.y; y++)
-//            {
-//                for (size_t x = minIndex.x; x <= maxIndex.x; x++)
-//                {
-//                    auto& voxel = volume->GetVoxel(x, y, z);
-//                    if (voxel.IsOccupied()) {
-//                        intersected = true;
-//                        //continue;
-//                    }
-//
-//                    HVector3 tp0{ p0[0], p0[1], p0[2] };
-//                    HVector3 tp1{ p1[0], p1[1], p1[2] };
-//                    HVector3 tp2{ p2[0], p2[1], p2[2] };
-//
-//                    if (voxel.IntersectsTriangle(tp0, tp1, tp2)) {
-//                        cout << "Intersects : " << x << ", " << y << ", " << z << endl;
-//                        voxel.SetOccupied(true);
-//                        voxel.SetCellId(cellId);
-//                        intersected = true;
-//                    }
-//                }
-//            }
-//        }
     }
 }
 

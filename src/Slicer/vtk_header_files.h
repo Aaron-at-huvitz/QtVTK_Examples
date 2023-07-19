@@ -32,6 +32,7 @@
 
 #include <vtkPolyDataMapper.h>
 #include <vtkDataSetMapper.h>
+#include <vtkLookupTable.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkDataObjectToTable.h>
 #include <vtkColorTransferFunction.h>
