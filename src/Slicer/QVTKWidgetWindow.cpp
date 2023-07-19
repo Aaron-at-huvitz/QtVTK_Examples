@@ -97,12 +97,7 @@ void QVTKWidgetWindow::InitializeMenuBar()
     fileMenu->addAction("Open (&O)", this, SLOT(OnMenuActionOpen()));
 
     auto analyzeMenu = ui.menuBar->addMenu("Analyze (&A)");
-
-    auto overhangMenu = analyzeMenu->addMenu("Overhang (&O)");
-    {
-        overhangMenu->addAction("Overhang Vertex Normal (&V)", this, SLOT(OnMenuActionAnalyzeOverhangVertexNormal()));
-        overhangMenu->addAction("Overhang Face Normal (&F)", this, SLOT(OnMenuActionAnalyzeOverhangFaceNormal()));
-    }
+    analyzeMenu->addAction("Overhang (&O)", this, SLOT(OnMenuActionAnalyzeOverhang()));
     analyzeMenu->addAction("Find Island (&I)", this, SLOT(OnMenuActionAnalyzeFindIsland()));
     analyzeMenu->addAction("Voxelize (&V)", this, SLOT(OnMenuActionAnalyzeVoxelize()));
 }
@@ -128,26 +123,13 @@ void QVTKWidgetWindow::OnMenuActionOpen()
     }
 }
 
-void QVTKWidgetWindow::OnMenuActionAnalyzeOverhangVertexNormal()
-{
-    if (nullptr != printingModel)
-    {
-        StopWatch::Start("Analyze Overhang Vertex Normal");
-
-        printingModel->AnalyzeOverhang(false);
-        ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
-
-        StopWatch::Stop("Analyze Overhang Vertex Normal");
-    }
-}
-
-void QVTKWidgetWindow::OnMenuActionAnalyzeOverhangFaceNormal()
+void QVTKWidgetWindow::OnMenuActionAnalyzeOverhang()
 {
     if (nullptr != printingModel)
     {
         StopWatch::Start("Analyze Overhang Face Normal");
 
-        printingModel->AnalyzeOverhang(true);
+        printingModel->AnalyzeOverhang();
         ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
 
         StopWatch::Stop("Analyze Overhang Face Normal");
@@ -214,7 +196,7 @@ void QVTKWidgetWindow::OnSlider3ValueChaned(int value)
 
 void QVTKWidgetWindow::mousePressEvent(QMouseEvent* event)
 {
-    cout << "mouse press event" << endl;
+    //cout << "mouse press event" << endl;
     if (event->button() == Qt::LeftButton) {
         lastMouseLButtonPosition = event->pos();
     }
@@ -288,21 +270,42 @@ void QVTKWidgetWindow::keyReleaseEvent(QKeyEvent* event)
     {
         if (nullptr != printingModel)
         {
-            printingModel->ToggleInitialModel();
+            if (event->modifiers() == Qt::KeyboardModifier::ShiftModifier)
+            {
+                printingModel->ToggleInitialModelRepresentation();
+            }
+            else
+            {
+                printingModel->ToggleInitialModelVisibility();
+            }
         }
     }
     else if (event->key() == Qt::Key_F2)
     {
         if (nullptr != printingModel)
         {
-            printingModel->ToggleVolumeModel();
+            if (event->modifiers() == Qt::KeyboardModifier::ShiftModifier)
+            {
+                printingModel->ToggleVolumeModelRepresentation();
+            }
+            else
+            {
+                printingModel->ToggleVolumeModelVisibility();
+            }
         }
     }
     else if (event->key() == Qt::Key_F3)
     {
         if (nullptr != printingModel)
         {
-            printingModel->ToggleOverhangModel();
+            if (event->modifiers() == Qt::KeyboardModifier::ShiftModifier)
+            {
+                printingModel->ToggleOverhangModelRepresentation();
+            }
+            else
+            {
+                printingModel->ToggleOverhangModelVisibility();
+            }
         }
     }
 }

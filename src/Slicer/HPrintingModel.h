@@ -20,7 +20,7 @@ public:
 
 	void Voxelize(double voxelSize);
 
-	void AnalyzeOverhang(bool faceNormal = true);
+	void AnalyzeOverhang();
 	void AnalyzeIsland();
 
 	double GetLongestEdgeLength();
@@ -28,12 +28,17 @@ public:
 
 	void Pick(double x, double y);
 
-	void ShowInitialModel(bool bShow);
-	void ToggleInitialModel();
-	void ShowVolumeModel(bool bShow);
-	void ToggleVolumeModel();
-	void ShowOverhangModel(bool bShow);
-	void ToggleOverhangModel();
+	inline void ShowInitialModel(bool bShow) { ShowModel(initialModelActor, bShow); }
+	inline void ToggleInitialModelVisibility() { ToggleModelVisibility(initialModelActor); }
+	inline void ToggleInitialModelRepresentation() { ToggleModelRepresentation(initialModelActor); }
+	
+	inline void ShowVolumeModel(bool bShow) { ShowModel(volumeModelActor, bShow); }
+	inline void ToggleVolumeModelVisibility() { ToggleModelVisibility(volumeModelActor); }
+	inline void ToggleVolumeModelRepresentation() { ToggleModelRepresentation(volumeModelActor); }
+	
+	inline void ShowOverhangModel(bool bShow) { ShowModel(overhangModelActor, bShow); }
+	inline void ToggleOverhangModelVisibility() { ToggleModelVisibility(overhangModelActor); }
+	inline void ToggleOverhangModelRepresentation() { ToggleModelRepresentation(overhangModelActor); }
 
 	inline vtkPolyData* GetInitialModelData() const { return initialModelData; }
 	inline vtkPolyDataMapper* GetInitialModelMapper() const { return initialModelMapper; }
@@ -71,4 +76,8 @@ protected:
 	vtkActor* volumeModelActor = nullptr;
 
 	HVolume* volume = nullptr;
+
+	void ShowModel(vtkActor* actor, bool bShow);
+	void ToggleModelVisibility(vtkActor* actor);
+	void ToggleModelRepresentation(vtkActor* actor);
 };

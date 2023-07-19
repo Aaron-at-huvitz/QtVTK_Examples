@@ -188,91 +188,98 @@ void HPrintingModel::Voxelize(double voxelSize)
     renderer->AddActor(volumeModelActor);
 }
 
-void HPrintingModel::AnalyzeOverhang(bool faceNormal)
+void HPrintingModel::AnalyzeOverhang()
 {
     ClearOverhangModel();
 
     overhangModelData = vtkPolyData::New();
-    overhangModelData->DeepCopy(initialModelData);
 
     vtkNew<vtkPolyDataNormals> normals;
-    normals->SetInputData(overhangModelData);
-    if (faceNormal)
-    {
-        normals->ComputeCellNormalsOn();
-    }
-    else
-    {
-        normals->ComputePointNormalsOn();
-    }
-
+    normals->SetInputData(initialModelData);
+    normals->ComputeCellNormalsOn();
     normals->Update();
 
     auto polyDataWithNormal = normals->GetOutput();
+
+    std::vector<vtkIdType> cellsToCreate;
+    std::vector<HVector3> cellNormalsToCreate;
+
+    auto cellDatas = polyDataWithNormal->GetCellData();
+    auto cellNormals = cellDatas->GetNormals();
+    for (size_t i = 0; i < polyDataWithNormal->GetNumberOfCells(); i++)
+    {
+        auto normal = cellNormals->GetTuple(i);
+
+        double gravity[3] = { 0.0, 0.0, -1.0 };
+        auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors(normal, gravity));
+        //if (angle < 45.0) angle = 45.0;
+
+        if (angle < 45.0)
+        {
+            auto cell = polyDataWithNormal->GetCell(i);
+            double p0[3], p1[3], p2[3];
+            cell->GetPoints()->GetPoint(0, p0);
+            cell->GetPoints()->GetPoint(1, p1);
+            cell->GetPoints()->GetPoint(2, p2);
+
+            cellsToCreate.push_back(i);
+            cellNormalsToCreate.push_back({ normal[0], normal[1], normal[2] });
+        }
+    }
+
+    std::map<vtkIdType, vtkIdType> pointIdMapping;
 
     vtkNew<vtkFloatArray> overhangIntensity;
     overhangIntensity->SetNumberOfComponents(1);
     overhangIntensity->SetName("OverhangIntensity");
 
-    if (faceNormal)
+    vtkNew<vtkPoints> points;
+    overhangModelData->SetPoints(points);
+    vtkNew<vtkCellArray> polys;
+    overhangModelData->SetPolys(polys);
+    for (size_t i = 0; i < cellsToCreate.size(); i++)
     {
-        auto cellDatas = polyDataWithNormal->GetCellData();
-        auto cellNormals = cellDatas->GetNormals();
-        for (size_t i = 0; i < polyDataWithNormal->GetNumberOfCells(); i++)
-        {
-            auto normal = cellNormals->GetTuple(i);
+        auto oldCellId = cellsToCreate[i];
+        auto oldCellNormal = cellNormalsToCreate[i];
 
-            double gravity[3] = { 0.0, 0.0, -1.0 };
-            auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors(normal, gravity));
-            //if (angle < 45.0) angle = 45.0;
-
-            if (angle < 45.0)
-            {
-                auto cell = polyDataWithNormal->GetCell(i);
-                double p0[3], p1[3], p2[3];
-                cell->GetPoints()->GetPoint(0, p0);
-                cell->GetPoints()->GetPoint(1, p1);
-                cell->GetPoints()->GetPoint(2, p2);
-
-                auto ratio = (90.0 - angle) / 90.0;
-
-                HVisualDebugging::AddTriangle(p0, p1, p2, 255 * ratio, 255 * (1 - ratio), 255 * (1 - ratio));
-            }
-
-            overhangIntensity->InsertNextValue(angle);
+        auto oldCell = polyDataWithNormal->GetCell(oldCellId);
+        auto pi0 = oldCell->GetPointId(0);
+        auto pi1 = oldCell->GetPointId(1);
+        auto pi2 = oldCell->GetPointId(2);
+        double p0[3], p1[3], p2[3];
+        if (pointIdMapping.count(pi0) == 0) {
+            polyDataWithNormal->GetPoint(pi0, p0);
+            auto npi0 = points->InsertNextPoint(p0);
+            pointIdMapping[pi0] = npi0;
+        }
+        if (pointIdMapping.count(pi1) == 0) {
+            polyDataWithNormal->GetPoint(pi1, p1);
+            auto npi1 = points->InsertNextPoint(p1);
+            pointIdMapping[pi1] = npi1;
+        }
+        if (pointIdMapping.count(pi2) == 0) {
+            polyDataWithNormal->GetPoint(pi2, p2);
+            auto npi2 = points->InsertNextPoint(p2);
+            pointIdMapping[pi2] = npi2;
         }
 
-        overhangModelData->GetCellData()->SetScalars(overhangIntensity);
-    }
-    else
-    {
-        auto pointDatas = polyDataWithNormal->GetPointData();
-        auto pointNormals = pointDatas->GetNormals();
-        for (size_t i = 0; i < polyDataWithNormal->GetNumberOfPoints(); i++)
-        {
-            auto normal = pointNormals->GetTuple(i);
-            double gravity[3] = { 0.0, 0.0, -1.0 };
-            auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors(normal, gravity));
-            //if (angle < 45.0) angle = 45.0;
+        vtkIdType pids[3]{ pointIdMapping[pi0], pointIdMapping[pi1], pointIdMapping[pi2] };
+        polys->InsertNextCell(3, pids);
 
-            overhangIntensity->InsertNextValue(angle);
-        }
+        auto& newNormal = cellNormalsToCreate[i];
+        double gravity[3] = { 0.0, 0.0, -1.0 };
+        auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors((double*)&newNormal, gravity));
 
-        overhangModelData->GetPointData()->SetScalars(overhangIntensity);
+        overhangIntensity->InsertNextValue(angle);
     }
+
+    overhangModelData->GetCellData()->SetScalars(overhangIntensity);
 
     overhangModelMapper = vtkPolyDataMapper::New();
     overhangModelMapper->SetInputData(overhangModelData);
     overhangModelMapper->ScalarVisibilityOn();
     overhangModelMapper->SetColorModeToMapScalars();
-    if (faceNormal)
-    {
-        overhangModelMapper->SetScalarModeToUseCellData();
-    }
-    else
-    {
-        overhangModelMapper->SetScalarModeToUsePointData();
-    }
+    overhangModelMapper->SetScalarModeToUseCellData();
 
     vtkNew<vtkColorTransferFunction> colorTransferFunction;
     colorTransferFunction->AddRGBPoint(0, 1.0, 0.0, 0.0);
@@ -285,6 +292,34 @@ void HPrintingModel::AnalyzeOverhang(bool faceNormal)
 
     renderer->AddActor(overhangModelActor);
     initialModelActor->VisibilityOff();
+
+
+
+    {
+        vtkNew<vtkPolyDataConnectivityFilter> connectivityFilter;
+        connectivityFilter->SetInputData(overhangModelData);
+        connectivityFilter->SetExtractionModeToAllRegions();
+        connectivityFilter->ColorRegionsOn();
+        connectivityFilter->Update();
+
+        cout << "Number of extracted regions: " << connectivityFilter->GetNumberOfExtractedRegions() << endl;
+
+        // Visualize
+        vtkNew<vtkPolyDataMapper> mapper;
+        mapper->SetInputConnection(connectivityFilter->GetOutputPort());
+        mapper->SetScalarRange(connectivityFilter->GetOutput()
+            ->GetPointData()
+            ->GetArray("RegionId")
+            ->GetRange());
+        mapper->Update();
+
+        double bounds[6];
+        overhangModelActor->GetBounds(bounds);
+        vtkNew<vtkActor> actor;
+        actor->SetMapper(mapper);
+        actor->SetPosition(0, 0, -(bounds[5] - bounds[4]) * 2);
+        renderer->AddActor(actor);
+    }
 }
 
 void HPrintingModel::AnalyzeIsland()
@@ -589,56 +624,35 @@ void HPrintingModel::Pick(double x, double y)
     }
 }
 
-void HPrintingModel::ShowInitialModel(bool bShow)
+void HPrintingModel::ShowModel(vtkActor* actor, bool bShow)
 {
-    if (nullptr != initialModelActor)
+    if (nullptr != actor)
     {
-        initialModelActor->SetVisibility(bShow);
+        actor->SetVisibility(bShow);
         renderer->GetRenderWindow()->Render();
     }
 }
 
-void HPrintingModel::ToggleInitialModel()
+void HPrintingModel::ToggleModelVisibility(vtkActor* actor)
 {
-    if (nullptr != initialModelActor)
+    if (nullptr != actor)
     {
-        initialModelActor->SetVisibility(!initialModelActor->GetVisibility());
+        actor->SetVisibility(!actor->GetVisibility());
         renderer->GetRenderWindow()->Render();
     }
 }
 
-void HPrintingModel::ShowVolumeModel(bool bShow)
+void HPrintingModel::ToggleModelRepresentation(vtkActor* actor)
 {
-    if (nullptr != volumeModelActor)
+    if (nullptr != actor)
     {
-        volumeModelActor->SetVisibility(bShow);
-        renderer->GetRenderWindow()->Render();
-    }
-}
-
-void HPrintingModel::ToggleVolumeModel()
-{
-    if (nullptr != volumeModelActor)
-    {
-        volumeModelActor->SetVisibility(!volumeModelActor->GetVisibility());
-        renderer->GetRenderWindow()->Render();
-    }
-}
-
-void HPrintingModel::ShowOverhangModel(bool bShow)
-{
-    if (nullptr != overhangModelActor)
-    {
-        overhangModelActor->SetVisibility(bShow);
-        renderer->GetRenderWindow()->Render();
-    }
-}
-
-void HPrintingModel::ToggleOverhangModel()
-{
-    if (nullptr != overhangModelActor)
-    {
-        overhangModelActor->SetVisibility(!overhangModelActor->GetVisibility());
+        auto mode = actor->GetProperty()->GetRepresentation();
+        mode += 1;
+        if (mode > VTK_SURFACE)
+        {
+            mode = VTK_POINTS;
+        }
+        actor->GetProperty()->SetRepresentation(mode);
         renderer->GetRenderWindow()->Render();
     }
 }
