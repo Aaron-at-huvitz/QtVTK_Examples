@@ -150,10 +150,14 @@ void HVisualDebugging::AddLine(double* p0, double* p1, unsigned char r, unsigned
 	auto cellData = s_linePolyData->GetCellData();
 	auto scalars = cellData->GetScalars();
 	scalars->InsertNextTuple3(r, g, b);
+
+	s_linePolyDataMapper->Update();
 }
 
 void HVisualDebugging::AddTriangle(double* p0, double* p1, double* p2, unsigned char r, unsigned char g, unsigned char b)
 {
+	cout << "p0: " << p0[0] << ", " << p0[1] << ", " << p0[2] << endl;
+
 	auto points = s_trianglePolyData->GetPoints();
 	auto pi0 = points->InsertNextPoint(p0);
 	auto pi1 = points->InsertNextPoint(p1);

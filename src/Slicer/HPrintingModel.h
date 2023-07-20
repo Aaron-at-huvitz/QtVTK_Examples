@@ -66,6 +66,7 @@ protected:
 	vtkPolyData* overhangModelData = nullptr;
 	vtkPolyDataMapper* overhangModelMapper = nullptr;
 	vtkActor* overhangModelActor = nullptr;
+	vtkPolyDataConnectivityFilter* overhangModelDataConnectivityFilter = nullptr;
 
 	vtkPolyData* remeshedModelData = nullptr;
 	vtkPolyDataMapper* remeshedModelMapper = nullptr;

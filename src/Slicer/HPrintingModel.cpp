@@ -4,6 +4,7 @@
 
 #include <map>
 #include <set>
+#include <stack>
 #include <random>
 
 HPrintingModel::HPrintingModel(vtkRenderer* renderer)
@@ -102,6 +103,12 @@ void HPrintingModel::ClearRemeshedModel()
 
 void HPrintingModel::ClearOverhangModel()
 {
+    if (nullptr != overhangModelDataConnectivityFilter)
+    {
+        overhangModelDataConnectivityFilter->Delete();
+        overhangModelDataConnectivityFilter = nullptr;
+    }
+
     if (nullptr != overhangModelData)
     {
         overhangModelData->Delete();
@@ -295,13 +302,13 @@ void HPrintingModel::AnalyzeOverhang()
     initialModelActor->VisibilityOff();
 
     {
-        vtkNew<vtkPolyDataConnectivityFilter> connectivityFilter;
-        connectivityFilter->SetInputData(overhangModelData);
-        connectivityFilter->SetExtractionModeToAllRegions();
-        connectivityFilter->ColorRegionsOn();
-        connectivityFilter->Update();
+        overhangModelDataConnectivityFilter = vtkPolyDataConnectivityFilter::New();
+        overhangModelDataConnectivityFilter->SetInputData(overhangModelData);
+        overhangModelDataConnectivityFilter->SetExtractionModeToAllRegions();
+        overhangModelDataConnectivityFilter->ColorRegionsOn();
+        overhangModelDataConnectivityFilter->Update();
 
-        int numberOfRegions = connectivityFilter->GetNumberOfExtractedRegions();
+        int numberOfRegions = overhangModelDataConnectivityFilter->GetNumberOfExtractedRegions();
         cout << "Number of extracted regions: " << numberOfRegions << endl;
 
         vtkNew<vtkLookupTable> lut;
@@ -333,7 +340,7 @@ void HPrintingModel::AnalyzeOverhang()
 
         // Visualize
         vtkNew<vtkPolyDataMapper> mapper;
-        mapper->SetInputConnection(connectivityFilter->GetOutputPort());
+        mapper->SetInputConnection(overhangModelDataConnectivityFilter->GetOutputPort());
         /*mapper->SetScalarRange(connectivityFilter->GetOutput()
             ->GetPointData()
             ->GetArray("RegionId")
@@ -347,7 +354,7 @@ void HPrintingModel::AnalyzeOverhang()
         vtkNew<vtkActor> actor;
         actor->SetMapper(mapper);
         //actor->SetPosition(0, 0, -(bounds[5] - bounds[4]) * 2);
-        renderer->AddActor(actor);
+        //renderer->AddActor(actor);
     }
 }
 
@@ -518,12 +525,35 @@ void HPrintingModel::Remesh(double edgeLength)
     remeshedModelActor->SetMapper(remeshedModelMapper);
 }
 
+void GetNeighborCellIds(vtkPolyData* polyData, vtkIdType cellId, std::list<vtkIdType>& neighborCellIds)
+{
+    vtkNew<vtkIdList> cellPointIds;
+    polyData->GetCellPoints(cellId, cellPointIds);
+
+    for (vtkIdType i = 0; i < cellPointIds->GetNumberOfIds(); i++)
+    {
+        vtkNew<vtkIdList> idList;
+        idList->InsertNextId(cellPointIds->GetId(i));
+
+        // get the neighbors of the cell
+        vtkNew<vtkIdList> ncIds;
+
+        polyData->GetCellNeighbors(cellId, idList, ncIds);
+
+        for (vtkIdType j = 0; j < ncIds->GetNumberOfIds(); j++)
+        {
+            neighborCellIds.push_back(ncIds->GetId(j));
+        }
+    }
+}
+
 void HPrintingModel::Pick(double x, double y)
 {
     vtkNew<vtkCellPicker> picker;
 
     picker->PickFromListOn();
-    picker->AddPickList(initialModelActor);
+    //picker->AddPickList(initialModelActor);
+    picker->AddPickList(overhangModelActor);
     picker->SetTolerance(0.0005);
 
     picker->Pick(x, y, 0, renderer);
@@ -533,9 +563,47 @@ void HPrintingModel::Pick(double x, double y)
         auto pickPosition = picker->GetPickPosition();
         auto cellId = picker->GetCellId();
         auto subId = picker->GetSubId();
+
         cout << "cellId: " << cellId << " subId: " << subId << endl;
         cout << "pickPosition: " << pickPosition[0] << ", " << pickPosition[1] << ", " << pickPosition[2] << endl;
+
         HVisualDebugging::AddSphere(pickPosition, 0.25, 255, 0, 0);
+        HVisualDebugging::AddLine(renderer->GetActiveCamera()->GetPosition(), pickPosition, 0, 0, 255);
+
+        std::set<vtkIdType> visited;
+        auto currentCellId = cellId;
+        std::stack<vtkIdType> nextCellIds;
+        nextCellIds.push(cellId);
+        while (nextCellIds.size() != 0)
+        {
+            currentCellId = nextCellIds.top();
+            nextCellIds.pop();
+
+            visited.insert(currentCellId);
+
+            std::list<vtkIdType> neighbors;
+            GetNeighborCellIds(overhangModelData, currentCellId, neighbors);
+
+            for (auto& n : neighbors)
+            {
+                if (visited.count(n) == 0)
+                {
+                    nextCellIds.push(n);
+                }
+            }
+        }
+
+        for (auto& selectedCellId : visited)
+        {
+            auto scell = overhangModelData->GetCell(selectedCellId);
+            auto points = scell->GetPoints();
+            double p0[3], p1[3], p2[3];
+            points->GetPoint(0, p0);
+            points->GetPoint(1, p1);
+            points->GetPoint(2, p2);
+
+            HVisualDebugging::AddTriangle(p0, p1, p2, 255, 0, 0);
+        }
     }
 }
 

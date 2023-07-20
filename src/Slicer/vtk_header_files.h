@@ -13,6 +13,8 @@
 #include <vtkRenderer.h>
 #include <vtkRendererCollection.h>
 
+#include <vtkObject.h>
+
 #include <vtkNamedColors.h>
 #include <vtkProperty.h>
 #include <vtkProperty2D.h>
@@ -20,6 +22,7 @@
 #include <vtkCamera.h>
 #include <vtkQuad.h>
 #include <vtkPointData.h>
+#include <vtkTriangle.h>
 #include <vtkCellData.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkPolyData.h>
@@ -59,6 +62,7 @@
 #include <vtkAdaptiveSubdivisionFilter.h>
 #include <vtkLinearExtrusionFilter.h>
 #include <vtkContourFilter.h>
+#include <vtkCellLocator.h>
 
 #include <vtkSTLReader.h>
 #include <vtkOBJReader.h>
