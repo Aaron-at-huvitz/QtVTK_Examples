@@ -7,7 +7,7 @@
 class HPrintingModel
 {
 public:
-	HPrintingModel(vtkRenderer* renderer);
+	HPrintingModel(vtkSmartPointer<vtkRenderer> renderer);
 	virtual ~HPrintingModel();
 
 	void LoadModel(const QString& fileName);
@@ -40,45 +40,45 @@ public:
 	inline void ToggleOverhangModelVisibility() { ToggleModelVisibility(overhangModelActor); }
 	inline void ToggleOverhangModelRepresentation() { ToggleModelRepresentation(overhangModelActor); }
 
-	inline vtkPolyData* GetInitialModelData() const { return initialModelData; }
-	inline vtkPolyDataMapper* GetInitialModelMapper() const { return initialModelMapper; }
-	inline vtkActor* GetInitialModelActor() const { return initialModelActor; }
+	inline vtkSmartPointer<vtkPolyData> GetInitialModelData() const { return initialModelData; }
+	inline vtkSmartPointer<vtkPolyDataMapper> GetInitialModelMapper() const { return initialModelMapper; }
+	inline vtkSmartPointer<vtkActor> GetInitialModelActor() const { return initialModelActor; }
 
-	inline vtkPolyData* GetRemeshedModelData() const { return remeshedModelData; }
-	inline vtkPolyDataMapper* GetRemeshedModelMapper() const { return remeshedModelMapper; }
-	inline vtkActor* GetRemeshedModelActor() const { return remeshedModelActor; }
+	inline vtkSmartPointer<vtkPolyData> GetRemeshedModelData() const { return remeshedModelData; }
+	inline vtkSmartPointer<vtkPolyDataMapper> GetRemeshedModelMapper() const { return remeshedModelMapper; }
+	inline vtkSmartPointer<vtkActor> GetRemeshedModelActor() const { return remeshedModelActor; }
 
-	inline vtkPolyData* GetVolumeModelData() const { return volumeModelData; }
-	inline vtkPolyDataMapper* GetVolumeModelMapper() const { return volumeModelMapper; }
-	inline vtkActor* GetVolumeModelActor() const { return volumeModelActor; }
+	inline vtkSmartPointer<vtkPolyData> GetVolumeModelData() const { return volumeModelData; }
+	inline vtkSmartPointer<vtkPolyDataMapper> GetVolumeModelMapper() const { return volumeModelMapper; }
+	inline vtkSmartPointer<vtkActor> GetVolumeModelActor() const { return volumeModelActor; }
 
-	inline vtkPolyData* GetOverhangModelData() const { return overhangModelData; }
-	inline vtkPolyDataMapper* GetOverhangModelMapper() const { return overhangModelMapper; }
-	inline vtkActor* GetOverhangModelActor() const { return overhangModelActor; }
+	inline vtkSmartPointer<vtkPolyData> GetOverhangModelData() const { return overhangModelData; }
+	inline vtkSmartPointer<vtkPolyDataMapper> GetOverhangModelMapper() const { return overhangModelMapper; }
+	inline vtkSmartPointer<vtkActor> GetOverhangModelActor() const { return overhangModelActor; }
 
 protected:
-	vtkRenderer* renderer = nullptr;
+	vtkSmartPointer<vtkRenderer> renderer = nullptr;
 	
-	vtkPolyData* initialModelData = nullptr;
-	vtkPolyDataMapper* initialModelMapper = nullptr;
-	vtkActor* initialModelActor = nullptr;
+	vtkSmartPointer<vtkPolyData> initialModelData = nullptr;
+	vtkSmartPointer<vtkPolyDataMapper> initialModelMapper = nullptr;
+	vtkSmartPointer<vtkActor> initialModelActor = nullptr;
 
-	vtkPolyData* overhangModelData = nullptr;
-	vtkPolyDataMapper* overhangModelMapper = nullptr;
-	vtkActor* overhangModelActor = nullptr;
-	vtkPolyDataConnectivityFilter* overhangModelDataConnectivityFilter = nullptr;
+	vtkSmartPointer<vtkPolyData> overhangModelData = nullptr;
+	vtkSmartPointer<vtkPolyDataMapper> overhangModelMapper = nullptr;
+	vtkSmartPointer<vtkActor> overhangModelActor = nullptr;
+	vtkSmartPointer<vtkPolyDataConnectivityFilter> overhangModelDataConnectivityFilter = nullptr;
 
-	vtkPolyData* remeshedModelData = nullptr;
-	vtkPolyDataMapper* remeshedModelMapper = nullptr;
-	vtkActor* remeshedModelActor = nullptr;
+	vtkSmartPointer<vtkPolyData> remeshedModelData = nullptr;
+	vtkSmartPointer<vtkPolyDataMapper> remeshedModelMapper = nullptr;
+	vtkSmartPointer<vtkActor> remeshedModelActor = nullptr;
 
-	vtkPolyData* volumeModelData = nullptr;
-	vtkPolyDataMapper* volumeModelMapper = nullptr;
-	vtkActor* volumeModelActor = nullptr;
+	vtkSmartPointer<vtkPolyData> volumeModelData = nullptr;
+	vtkSmartPointer<vtkPolyDataMapper> volumeModelMapper = nullptr;
+	vtkSmartPointer<vtkActor> volumeModelActor = nullptr;
 
 	HVolume* volume = nullptr;
 
-	void ShowModel(vtkActor* actor, bool bShow);
-	void ToggleModelVisibility(vtkActor* actor);
-	void ToggleModelRepresentation(vtkActor* actor);
+	void ShowModel(vtkSmartPointer<vtkActor> actor, bool bShow);
+	void ToggleModelVisibility(vtkSmartPointer<vtkActor> actor);
+	void ToggleModelRepresentation(vtkSmartPointer<vtkActor> actor);
 };

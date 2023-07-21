@@ -15,25 +15,24 @@ private:
 	HVisualDebugging();
 	~HVisualDebugging();
 
-	static void Initialize(vtkRenderer* renderer);
+	static void Initialize(vtkSmartPointer<vtkRenderer> renderer);
 
 	static void Terminate();
 
 	static HVisualDebugging* s_instance;
 
-	static vtkRenderer* s_renderer;
-	static vtkRenderWindow* s_renderWindow;
-	static vtkRenderWindowInteractor* s_renderWindowInteractor;
+	static vtkSmartPointer<vtkRenderer> s_renderer;
+	static vtkSmartPointer<vtkRenderWindow> s_renderWindow;
 
-	static vtkActor* s_lineActor;
-	static vtkPolyDataMapper* s_linePolyDataMapper;
-	static vtkPolyData* s_linePolyData;
+	static vtkSmartPointer<vtkActor> s_lineActor;
+	static vtkSmartPointer<vtkPolyDataMapper> s_linePolyDataMapper;
+	static vtkSmartPointer<vtkPolyData> s_linePolyData;
 
-	static vtkActor* s_triangleActor;
-	static vtkPolyDataMapper* s_trianglePolyDataMapper;
-	static vtkPolyData* s_trianglePolyData;
+	static vtkSmartPointer<vtkActor> s_triangleActor;
+	static vtkSmartPointer<vtkPolyDataMapper> s_trianglePolyDataMapper;
+	static vtkSmartPointer<vtkPolyData> s_trianglePolyData;
 
-	static vtkAssembly* s_sphereAssembly;
+	static vtkSmartPointer<vtkAssembly> s_sphereAssembly;
 
 	static void ShowLines(bool bShow);
 	static void ToggleLines();

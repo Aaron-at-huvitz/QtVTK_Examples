@@ -14,6 +14,7 @@
 #include <vtkRendererCollection.h>
 
 #include <vtkObject.h>
+#include <vtkTable.h>
 
 #include <vtkNamedColors.h>
 #include <vtkProperty.h>
