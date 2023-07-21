@@ -422,20 +422,11 @@ void HPrintingModel::AnalyzeIsland()
         islandPoints.insert(currentId);
     }
 
-    vtkNew<vtkSphereSource> sphereSource;
-    sphereSource->SetRadius(0.5);
-    vtkNew<vtkPolyDataMapper> sphereMapper;
-    sphereMapper->SetInputConnection(sphereSource->GetOutputPort());
-
     for (auto& i : islandPoints)
     {
         double p[3];
         initialModelData->GetPoint(i, p);
-        vtkNew<vtkActor> sphereActor;
-        sphereActor->SetMapper(sphereMapper);
-        sphereActor->SetPosition(p);
-        sphereActor->GetProperty()->SetColor(0, 0, 255);
-        renderer->AddActor(sphereActor);
+        HVisualDebugging::AddSphere(p, 0.5, 0, 0, 255);
     }
 
     cout << "Total Island Points : " << islandPoints.size() << endl;
@@ -537,7 +528,10 @@ void HPrintingModel::Pick(double x, double y)
 
     picker->PickFromListOn();
     //picker->AddPickList(initialModelActor);
-    picker->AddPickList(overhangModelActor);
+    if (nullptr != overhangModelActor)
+    {
+        picker->AddPickList(overhangModelActor);
+    }
     picker->SetTolerance(0.0005);
 
     picker->Pick(x, y, 0, renderer);

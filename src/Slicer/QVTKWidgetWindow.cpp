@@ -308,6 +308,23 @@ void QVTKWidgetWindow::keyReleaseEvent(QKeyEvent* event)
             }
         }
     }
+    else if (event->key() == Qt::Key_Space)
+    {
+        HVector3 p0, p1, p2;
+        p0.x = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+        p0.y = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+        p0.z = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+
+        p1.x = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+        p1.y = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+        p1.z = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+
+        p2.x = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+        p2.y = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+        p2.z = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+
+        HVisualDebugging::AddTriangle(p0, p1, p2, 255, 255, 0);
+    }
 }
 
 void QVTKWidgetWindow::LoadModel(const QString& fileName)

@@ -125,6 +125,7 @@
     <QtMoc Include="QVTKWidget.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HCommon.h" />
     <ClInclude Include="HVisualDebugging.h" />
     <ClInclude Include="HVolume.h" />
     <ClInclude Include="ModelClipper.h" />

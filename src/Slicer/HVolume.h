@@ -13,13 +13,7 @@
 
 #include "vtk_header_files.h"
 
-struct HVector3 {
-	double x, y, z;
-};
-
-struct HTriangle {
-	HVector3 v0, v1, v2;
-};
+#include "HCommon.h"
 
 class HAABB
 {
@@ -206,6 +200,6 @@ protected:
 	int resolutionZ = 0;
 
 	std::vector<HVoxel> voxels;
-	vtkSmartPointer<vtkPolyData> initialModelData;
-	vtkSmartPointer<vtkPolyData> volumeModelData;
+	vtkSmartPointer<vtkPolyData> initialModelData = nullptr;
+	vtkSmartPointer<vtkPolyData> volumeModelData = nullptr;
 };

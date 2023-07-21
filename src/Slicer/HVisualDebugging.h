@@ -2,14 +2,21 @@
 
 #include "vtk_header_files.h"
 
+#include "HCommon.h"
+
 class QVTKWidgetWindow;
 
 class HVisualDebugging
 {
 public:
 	static void AddLine(double* p0, double* p1, unsigned char r, unsigned char g, unsigned char b);
+	static void AddLine(const HVector3& p0, const HVector3& p1, unsigned char r, unsigned char g, unsigned char b);
+
 	static void AddTriangle(double* p0, double* p1, double* p2, unsigned char r, unsigned char g, unsigned char b);
+	static void AddTriangle(const HVector3& p0, const HVector3& p1, const HVector3& p2, unsigned char r, unsigned char g, unsigned char b);
+
 	static void AddSphere(double* center, double radius, unsigned char r, unsigned char g, unsigned char b);
+	static void AddSphere(const HVector3& center, double radius, unsigned char r, unsigned char g, unsigned char b);
 
 private:
 	HVisualDebugging();
@@ -18,6 +25,8 @@ private:
 	static void Initialize(vtkSmartPointer<vtkRenderer> renderer);
 
 	static void Terminate();
+
+	static void Update();
 
 	static HVisualDebugging* s_instance;
 
@@ -32,7 +41,9 @@ private:
 	static vtkSmartPointer<vtkPolyDataMapper> s_trianglePolyDataMapper;
 	static vtkSmartPointer<vtkPolyData> s_trianglePolyData;
 
-	static vtkSmartPointer<vtkAssembly> s_sphereAssembly;
+	static vtkSmartPointer<vtkActor> s_sphereActor;
+	static vtkSmartPointer<vtkPolyDataMapper> s_spherePolyDataMapper;
+	static vtkSmartPointer<vtkPolyData> s_spherePolyData;
 
 	static void ShowLines(bool bShow);
 	static void ToggleLines();

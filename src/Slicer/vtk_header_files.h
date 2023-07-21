@@ -21,9 +21,10 @@
 #include <vtkProperty2D.h>
 
 #include <vtkCamera.h>
-#include <vtkQuad.h>
 #include <vtkPointData.h>
+#include <vtkLine.h>
 #include <vtkTriangle.h>
+#include <vtkQuad.h>
 #include <vtkCellData.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkPolyData.h>
