@@ -46,7 +46,7 @@ public slots:
 protected:
     HPrintingModel* printingModel = nullptr;
     QVoxelizationOptionDialog* voxelizationOptionDialog = nullptr;
-    vtkOrientationMarkerWidget* orientationMarkerWidget = nullptr;
+    vtkSmartPointer<vtkOrientationMarkerWidget> orientationMarkerWidget = nullptr;
 
     QPoint lastMouseLButtonPosition;
     QPoint lastMouseRButtonPosition;

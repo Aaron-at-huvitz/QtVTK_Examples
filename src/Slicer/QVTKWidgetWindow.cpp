@@ -320,7 +320,6 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
 
     if (nullptr != orientationMarkerWidget)
     {
-        orientationMarkerWidget->Delete();
         orientationMarkerWidget = nullptr;
     }
 
@@ -404,7 +403,7 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
     //axes->GetYAxisCaptionActor2D()->GetCaptionTextProperty()->ShallowCopy(tprop);
     //axes->GetZAxisCaptionActor2D()->GetCaptionTextProperty()->ShallowCopy(tprop);
 
-    orientationMarkerWidget = vtkOrientationMarkerWidget::New();
+    orientationMarkerWidget = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
     orientationMarkerWidget->SetOrientationMarker(axes);
     // Position upper left in the viewport.
     // orientationMarkerWidget->SetViewport(0.0, 0.8, 0.2, 1.0);

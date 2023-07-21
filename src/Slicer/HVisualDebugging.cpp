@@ -2,19 +2,18 @@
 
 HVisualDebugging* HVisualDebugging::s_instance = nullptr;
 
-vtkRenderer* HVisualDebugging::s_renderer = nullptr;
-vtkRenderWindow* HVisualDebugging::s_renderWindow = nullptr;
-vtkRenderWindowInteractor* HVisualDebugging::s_renderWindowInteractor = nullptr;
+vtkSmartPointer<vtkRenderer> HVisualDebugging::s_renderer;
+vtkSmartPointer<vtkRenderWindow> HVisualDebugging::s_renderWindow;
 
-vtkActor* HVisualDebugging::s_lineActor = nullptr;
-vtkPolyDataMapper* HVisualDebugging::s_linePolyDataMapper = nullptr;
-vtkPolyData* HVisualDebugging::s_linePolyData = nullptr;
+vtkSmartPointer<vtkActor> HVisualDebugging::s_lineActor;
+vtkSmartPointer<vtkPolyDataMapper> HVisualDebugging::s_linePolyDataMapper;
+vtkSmartPointer<vtkPolyData> HVisualDebugging::s_linePolyData;
 
-vtkActor* HVisualDebugging::s_triangleActor = nullptr;
-vtkPolyDataMapper* HVisualDebugging::s_trianglePolyDataMapper = nullptr;
-vtkPolyData* HVisualDebugging::s_trianglePolyData = nullptr;
+vtkSmartPointer<vtkActor> HVisualDebugging::s_triangleActor;
+vtkSmartPointer<vtkPolyDataMapper> HVisualDebugging::s_trianglePolyDataMapper;
+vtkSmartPointer<vtkPolyData> HVisualDebugging::s_trianglePolyData;
 
-vtkAssembly* HVisualDebugging::s_sphereAssembly = nullptr;
+vtkSmartPointer<vtkAssembly> HVisualDebugging::s_sphereAssembly;
 
 HVisualDebugging::HVisualDebugging()
 {
@@ -26,7 +25,7 @@ HVisualDebugging::~HVisualDebugging()
 
 }
 
-void HVisualDebugging::Initialize(vtkRenderer* renderer)
+void HVisualDebugging::Initialize(vtkSmartPointer<vtkRenderer> renderer)
 {
 	if (nullptr == s_instance)
 	{
@@ -35,14 +34,13 @@ void HVisualDebugging::Initialize(vtkRenderer* renderer)
 
 	s_renderer = renderer;
 	s_renderWindow = s_renderer->GetRenderWindow();
-	s_renderWindowInteractor = s_renderWindow->GetInteractor();
 
 #pragma region Line
 	{
-		s_linePolyData = vtkPolyData::New();
-		s_linePolyDataMapper = vtkPolyDataMapper::New();
+		s_linePolyData = vtkSmartPointer<vtkPolyData>::New();
+		s_linePolyDataMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 		s_linePolyDataMapper->SetInputData(s_linePolyData);
-		s_lineActor = vtkActor::New();
+		s_lineActor = vtkSmartPointer<vtkActor>::New();
 		s_lineActor->SetMapper(s_linePolyDataMapper);
 
 		vtkNew<vtkPoints> points;
@@ -61,10 +59,10 @@ void HVisualDebugging::Initialize(vtkRenderer* renderer)
 
 #pragma region Triangle
 	{
-		s_trianglePolyData = vtkPolyData::New();
-		s_trianglePolyDataMapper = vtkPolyDataMapper::New();
+		s_trianglePolyData = vtkSmartPointer<vtkPolyData>::New();
+		s_trianglePolyDataMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 		s_trianglePolyDataMapper->SetInputData(s_trianglePolyData);
-		s_triangleActor = vtkActor::New();
+		s_triangleActor = vtkSmartPointer<vtkActor>::New();
 		s_triangleActor->SetMapper(s_trianglePolyDataMapper);
 
 		vtkNew<vtkPoints> points;
@@ -82,7 +80,7 @@ void HVisualDebugging::Initialize(vtkRenderer* renderer)
 #pragma endregion
 
 	{
-		s_sphereAssembly = vtkAssembly::New();
+		s_sphereAssembly = vtkSmartPointer<vtkAssembly>::New();
 		s_renderer->AddActor(s_sphereAssembly);
 	}
 }
@@ -92,19 +90,16 @@ void HVisualDebugging::Terminate()
 #pragma region Line
 	if (nullptr != s_linePolyData)
 	{
-		s_linePolyData->Delete();
 		s_linePolyData = nullptr;
 	}
 
 	if (nullptr != s_linePolyDataMapper)
 	{
-		s_linePolyDataMapper->Delete();
 		s_linePolyDataMapper = nullptr;
 	}
 
 	if (nullptr != s_lineActor)
 	{
-		s_lineActor->Delete();
 		s_lineActor = nullptr;
 	}
 #pragma endregion
@@ -112,19 +107,16 @@ void HVisualDebugging::Terminate()
 #pragma region Triangle
 	if (nullptr != s_trianglePolyData)
 	{
-		s_trianglePolyData->Delete();
 		s_trianglePolyData = nullptr;
 	}
 
 	if (nullptr != s_trianglePolyDataMapper)
 	{
-		s_trianglePolyDataMapper->Delete();
 		s_trianglePolyDataMapper = nullptr;
 	}
 
 	if (nullptr != s_triangleActor)
 	{
-		s_triangleActor->Delete();
 		s_triangleActor = nullptr;
 	}
 #pragma endregion
@@ -132,7 +124,6 @@ void HVisualDebugging::Terminate()
 
 	if (nullptr != s_sphereAssembly)
 	{
-		s_sphereAssembly->Delete();
 		s_sphereAssembly = nullptr;
 	}
 }

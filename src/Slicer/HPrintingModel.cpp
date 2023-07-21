@@ -7,7 +7,7 @@
 #include <stack>
 #include <random>
 
-HPrintingModel::HPrintingModel(vtkRenderer* renderer)
+HPrintingModel::HPrintingModel(vtkSmartPointer<vtkRenderer> renderer)
     : renderer(renderer)
 {
 }
@@ -38,13 +38,13 @@ void HPrintingModel::LoadModel(const QString& fileName)
     reader->SetFileName(fileName.toStdString().c_str());
     reader->Update();
 
-    initialModelData = vtkPolyData::New();
+    initialModelData = vtkSmartPointer<vtkPolyData>::New();
     initialModelData->DeepCopy(reader->GetOutput());
 
-    initialModelMapper = vtkPolyDataMapper::New();
+    initialModelMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     initialModelMapper->SetInputConnection(reader->GetOutputPort());
 
-    initialModelActor = vtkActor::New();
+    initialModelActor = vtkSmartPointer<vtkActor>::New();
     initialModelActor->SetMapper(initialModelMapper);
 
     double bounds[6];
@@ -83,20 +83,17 @@ void HPrintingModel::ClearRemeshedModel()
 {
     if (nullptr != remeshedModelData)
     {
-        remeshedModelData->Delete();
         remeshedModelData = nullptr;
     }
 
     if (nullptr != remeshedModelMapper)
     {
-        remeshedModelMapper->Delete();
         remeshedModelMapper = nullptr;
     }
 
     if (nullptr != remeshedModelActor)
     {
         renderer->RemoveActor(remeshedModelActor);
-        remeshedModelActor->Delete();
         remeshedModelActor = nullptr;
     }
 }
@@ -105,26 +102,22 @@ void HPrintingModel::ClearOverhangModel()
 {
     if (nullptr != overhangModelDataConnectivityFilter)
     {
-        overhangModelDataConnectivityFilter->Delete();
         overhangModelDataConnectivityFilter = nullptr;
     }
 
     if (nullptr != overhangModelData)
     {
-        overhangModelData->Delete();
         overhangModelData = nullptr;
     }
 
     if (nullptr != overhangModelMapper)
     {
-        overhangModelMapper->Delete();
         overhangModelMapper = nullptr;
     }
 
     if (nullptr != overhangModelActor)
     {
         renderer->RemoveActor(overhangModelActor);
-        overhangModelActor->Delete();
         overhangModelActor = nullptr;
     }
 }
@@ -133,20 +126,17 @@ void HPrintingModel::ClearVolumeModel()
 {
     if (nullptr != volumeModelData)
     {
-        volumeModelData->Delete();
         volumeModelData = nullptr;
     }
 
     if (nullptr != volumeModelMapper)
     {
-        volumeModelMapper->Delete();
         volumeModelMapper = nullptr;
     }
 
     if (nullptr != volumeModelActor)
     {
         renderer->RemoveActor(volumeModelActor);
-        volumeModelActor->Delete();
         volumeModelActor = nullptr;
     }
 }
@@ -155,20 +145,17 @@ void HPrintingModel::ClearInitialModel()
 {
     if (nullptr != initialModelData)
     {
-        initialModelData->Delete();
         initialModelData = nullptr;
     }
 
     if (nullptr != initialModelMapper)
     {
-        initialModelMapper->Delete();
         initialModelMapper = nullptr;
     }
 
     if (nullptr != initialModelActor)
     {
         renderer->RemoveActor(initialModelActor);
-        initialModelActor->Delete();
         initialModelActor = nullptr;
     }
 }
@@ -177,7 +164,7 @@ void HPrintingModel::Voxelize(double voxelSize)
 {
     ClearVolumeModel();
 
-    volumeModelData = vtkPolyData::New();
+    volumeModelData = vtkSmartPointer<vtkPolyData>::New();
     vtkNew<vtkPoints> voxelsPoints;
     volumeModelData->SetPoints(voxelsPoints);
     vtkNew<vtkCellArray> voxelsQuads;
@@ -185,10 +172,10 @@ void HPrintingModel::Voxelize(double voxelSize)
 
     volume = new HVolume(voxelSize, initialModelData, volumeModelData);
 
-    volumeModelMapper = vtkPolyDataMapper::New();
+    volumeModelMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     volumeModelMapper->SetInputData(volumeModelData);
 
-    volumeModelActor = vtkActor::New();
+    volumeModelActor = vtkSmartPointer<vtkActor>::New();
     volumeModelActor->SetMapper(volumeModelMapper);
     volumeModelActor->GetProperty()->SetRepresentationToWireframe();
     volumeModelActor->GetProperty()->SetColor(0.0, 0.5, 0.0);
@@ -200,7 +187,7 @@ void HPrintingModel::AnalyzeOverhang()
 {
     ClearOverhangModel();
 
-    overhangModelData = vtkPolyData::New();
+    overhangModelData = vtkSmartPointer<vtkPolyData>::New();
 
     vtkNew<vtkPolyDataNormals> normals;
     normals->SetInputData(initialModelData);
@@ -283,7 +270,7 @@ void HPrintingModel::AnalyzeOverhang()
 
     overhangModelData->GetCellData()->SetScalars(overhangIntensity);
 
-    overhangModelMapper = vtkPolyDataMapper::New();
+    overhangModelMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     overhangModelMapper->SetInputData(overhangModelData);
     overhangModelMapper->ScalarVisibilityOn();
     overhangModelMapper->SetColorModeToMapScalars();
@@ -295,14 +282,14 @@ void HPrintingModel::AnalyzeOverhang()
     colorTransferFunction->AddRGBPoint(90, 1.0, 1.0, 1.0);
     overhangModelMapper->SetLookupTable(colorTransferFunction);
 
-    overhangModelActor = vtkActor::New();
+    overhangModelActor = vtkSmartPointer<vtkActor>::New();
     overhangModelActor->SetMapper(overhangModelMapper);
 
     renderer->AddActor(overhangModelActor);
     initialModelActor->VisibilityOff();
 
     {
-        overhangModelDataConnectivityFilter = vtkPolyDataConnectivityFilter::New();
+        overhangModelDataConnectivityFilter = vtkSmartPointer<vtkPolyDataConnectivityFilter>::New();
         overhangModelDataConnectivityFilter->SetInputData(overhangModelData);
         overhangModelDataConnectivityFilter->SetExtractionModeToAllRegions();
         overhangModelDataConnectivityFilter->ColorRegionsOn();
@@ -497,31 +484,28 @@ void HPrintingModel::Remesh(double edgeLength)
 
     if (nullptr != remeshedModelMapper)
     {
-        remeshedModelMapper->Delete();
         remeshedModelMapper = nullptr;
     }
 
     if (nullptr != initialModelActor)
     {
         renderer->RemoveActor(initialModelActor);
-        initialModelActor->Delete();
         initialModelActor = nullptr;
     }
 
     if (nullptr != remeshedModelActor)
     {
         renderer->RemoveActor(remeshedModelActor);
-        remeshedModelActor->Delete();
         remeshedModelActor = nullptr;
     }
 
-    remeshedModelData = vtkPolyData::New();
+    remeshedModelData = vtkSmartPointer<vtkPolyData>::New();
     remeshedModelData->DeepCopy(subdivisionFilter->GetOutput());
 
-    remeshedModelMapper = vtkPolyDataMapper::New();
+    remeshedModelMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     remeshedModelMapper->SetInputData(remeshedModelData);
 
-    remeshedModelActor = vtkActor::New();
+    remeshedModelActor = vtkSmartPointer<vtkActor>::New();
     remeshedModelActor->SetMapper(remeshedModelMapper);
 }
 
@@ -603,11 +587,15 @@ void HPrintingModel::Pick(double x, double y)
             points->GetPoint(2, p2);
 
             HVisualDebugging::AddTriangle(p0, p1, p2, 255, 0, 0);
+
+            //HVisualDebugging::AddLine(p0, p1, 255, 0, 0);
+            //HVisualDebugging::AddLine(p1, p2, 255, 0, 0);
+            //HVisualDebugging::AddLine(p2, p0, 255, 0, 0);
         }
     }
 }
 
-void HPrintingModel::ShowModel(vtkActor* actor, bool bShow)
+void HPrintingModel::ShowModel(vtkSmartPointer<vtkActor> actor, bool bShow)
 {
     if (nullptr != actor)
     {
@@ -616,7 +604,7 @@ void HPrintingModel::ShowModel(vtkActor* actor, bool bShow)
     }
 }
 
-void HPrintingModel::ToggleModelVisibility(vtkActor* actor)
+void HPrintingModel::ToggleModelVisibility(vtkSmartPointer<vtkActor> actor)
 {
     if (nullptr != actor)
     {
@@ -625,7 +613,7 @@ void HPrintingModel::ToggleModelVisibility(vtkActor* actor)
     }
 }
 
-void HPrintingModel::ToggleModelRepresentation(vtkActor* actor)
+void HPrintingModel::ToggleModelRepresentation(vtkSmartPointer<vtkActor> actor)
 {
     if (nullptr != actor)
     {

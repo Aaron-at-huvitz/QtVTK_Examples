@@ -16,7 +16,7 @@ HAABB::HAABB(const HVector3& minPoint, const HVector3& maxPoint)
 	update();
 }
 
-void HAABB::InsertToPolyData(vtkPolyData* polyData)
+void HAABB::InsertToPolyData(vtkSmartPointer<vtkPolyData> polyData)
 {
     //cout << "InsertToPolyData min: " << xyz.x << ", " << xyz.y << ", " << xyz.z << endl << "\tmax: " << XYZ.x << ", " << XYZ.y << ", " << XYZ.z << endl;
 
@@ -212,7 +212,7 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
 	//	InitializeVTK();
 	//}
 
-HVolume::HVolume(double voxelSize, vtkPolyData* initialModelData, vtkPolyData* volumeModelData)
+HVolume::HVolume(double voxelSize, vtkSmartPointer<vtkPolyData> initialModelData, vtkSmartPointer<vtkPolyData> volumeModelData)
 	: voxelSize(voxelSize)
 {
 	double bounds[6];
@@ -229,7 +229,7 @@ HVolume::HVolume(double voxelSize, vtkPolyData* initialModelData, vtkPolyData* v
 	InitializeVTK(volumeModelData);
 }
 
-void HVolume::Initialize(vtkPolyData* initialModelData)
+void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 {
 	this->initialModelData = initialModelData;
 
@@ -338,7 +338,7 @@ void HVolume::Initialize(vtkPolyData* initialModelData)
 	cout << "Maximum cell count in a voxel: " << maxCellCount << endl;
 }
 
-void HVolume::InitializeVTK(vtkPolyData* volumeModelData)
+void HVolume::InitializeVTK(vtkSmartPointer<vtkPolyData> volumeModelData)
 {
 	if (nullptr == volumeModelData)
 	{
