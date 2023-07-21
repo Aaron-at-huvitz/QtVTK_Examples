@@ -7,6 +7,8 @@
 #include <stack>
 #include <random>
 
+#include <omp.h>
+
 HPrintingModel::HPrintingModel(vtkSmartPointer<vtkRenderer> renderer)
     : renderer(renderer)
 {
@@ -164,16 +166,45 @@ void HPrintingModel::Voxelize(double voxelSize)
 {
     ClearVolumeModel();
 
-    volumeModelData = vtkSmartPointer<vtkPolyData>::New();
-    vtkNew<vtkPoints> voxelsPoints;
-    volumeModelData->SetPoints(voxelsPoints);
-    vtkNew<vtkCellArray> voxelsQuads;
-    volumeModelData->SetPolys(voxelsQuads);
+    vtkNew<vtkPolyData> polyData;
+    vtkNew<vtkPoints> points;
+    polyData->SetPoints(points);
 
-    volume = new HVolume(voxelSize, initialModelData, volumeModelData);
+    volume = new HVolume(voxelSize, initialModelData);
+    auto voxels = volume->GetVoxels();
+    auto resolutionX = volume->GetResolutionX();
+    auto resolutionY = volume->GetResolutionY();
+    auto resolutionZ = volume->GetResolutionZ();
+
+    for (int z = 0; z < resolutionZ; z++)
+    {
+        for (int y = 0; y < resolutionY; y++)
+        {
+            for (int x = 0; x < resolutionX; x++)
+            {
+                auto& voxel = voxels[resolutionX * resolutionY * z + resolutionX * y + x];
+                if (voxel.IsOccupied())
+                {
+                    voxel.GetCenter();
+                    points->InsertNextPoint((double*)&(voxel.GetCenter()));
+                }
+            }
+        }
+    }
+
+    vtkNew<vtkCubeSource> cubeSource;
+    cubeSource->SetXLength(voxelSize);
+    cubeSource->SetYLength(voxelSize);
+    cubeSource->SetZLength(voxelSize);
+    cubeSource->Update();
+
+    volumeModelData = vtkSmartPointer<vtkGlyph3D>::New();
+    volumeModelData->SetSourceConnection(cubeSource->GetOutputPort());
+    volumeModelData->SetInputData(polyData);
+    volumeModelData->Update();
 
     volumeModelMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    volumeModelMapper->SetInputData(volumeModelData);
+    volumeModelMapper->SetInputConnection(volumeModelData->GetOutputPort());
 
     volumeModelActor = vtkSmartPointer<vtkActor>::New();
     volumeModelActor->SetMapper(volumeModelMapper);
@@ -426,7 +457,8 @@ void HPrintingModel::AnalyzeIsland()
     {
         double p[3];
         initialModelData->GetPoint(i, p);
-        HVisualDebugging::AddSphere(p, 0.5, 0, 0, 255);
+        //HVisualDebugging::AddSphere(p, 0.5, 0, 0, 255);
+        HVisualDebugging::AddArrow(p, 0, 0, 255);
     }
 
     cout << "Total Island Points : " << islandPoints.size() << endl;

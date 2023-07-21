@@ -48,7 +48,7 @@ public:
 	inline vtkSmartPointer<vtkPolyDataMapper> GetRemeshedModelMapper() const { return remeshedModelMapper; }
 	inline vtkSmartPointer<vtkActor> GetRemeshedModelActor() const { return remeshedModelActor; }
 
-	inline vtkSmartPointer<vtkPolyData> GetVolumeModelData() const { return volumeModelData; }
+	inline vtkSmartPointer<vtkGlyph3D> GetVolumeModelData() const { return volumeModelData; }
 	inline vtkSmartPointer<vtkPolyDataMapper> GetVolumeModelMapper() const { return volumeModelMapper; }
 	inline vtkSmartPointer<vtkActor> GetVolumeModelActor() const { return volumeModelActor; }
 
@@ -72,7 +72,7 @@ protected:
 	vtkSmartPointer<vtkPolyDataMapper> remeshedModelMapper = nullptr;
 	vtkSmartPointer<vtkActor> remeshedModelActor = nullptr;
 
-	vtkSmartPointer<vtkPolyData> volumeModelData = nullptr;
+	vtkSmartPointer<vtkGlyph3D> volumeModelData = nullptr;
 	vtkSmartPointer<vtkPolyDataMapper> volumeModelMapper = nullptr;
 	vtkSmartPointer<vtkActor> volumeModelActor = nullptr;
 

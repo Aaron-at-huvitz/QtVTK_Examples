@@ -206,13 +206,44 @@ bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const H
     return true;
 }
 
+bool HAABB::IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const HVector3& tp2, const HVector3& tn)
+{
+	auto center = (tp0 + tp1 + tp2) / 3.0;
+	auto dir0 = (xyz - center);
+	auto dir1 = (xyZ - center);
+	auto dir2 = (xYz - center);
+	auto dir3 = (xYZ - center);
+	auto dir4 = (Xyz - center);
+	auto dir5 = (XyZ - center);
+	auto dir6 = (XYz - center);
+	auto dir7 = (XYZ - center);
+	auto d0 = dir0 * tn;
+	auto d1 = dir1 * tn;
+	auto d2 = dir2 * tn;
+	auto d3 = dir3 * tn;
+	auto d4 = dir4 * tn;
+	auto d5 = dir5 * tn;
+	auto d6 = dir6 * tn;
+	auto d7 = dir7 * tn;
+
+	if ((d0 > EPSILON && d1 > EPSILON && d2 > EPSILON && d3 > EPSILON && d4 > EPSILON && d5 > EPSILON && d6 > EPSILON && d7 > EPSILON) ||
+		(d0 < -EPSILON && d1 < -EPSILON && d2 < -EPSILON && d3 < -EPSILON && d4 < -EPSILON && d5 < -EPSILON && d6 < -EPSILON && d7 < -EPSILON))
+	{
+		return false;
+	}
+	else
+	{
+		return IntersectsTriangle(tp0, tp1, tp2);
+	}
+}
+
 //HVolume::HVolume(double voxelSize, const HVector3& minPoint, const HVector3& maxPoint)
 	//	: HAABB(minPoint, maxPoint), voxelSize(voxelSize)
 	//{
 	//	InitializeVTK();
 	//}
 
-HVolume::HVolume(double voxelSize, vtkSmartPointer<vtkPolyData> initialModelData, vtkSmartPointer<vtkPolyData> volumeModelData)
+HVolume::HVolume(double voxelSize, vtkSmartPointer<vtkPolyData> initialModelData)
 	: voxelSize(voxelSize)
 {
 	double bounds[6];
@@ -226,16 +257,24 @@ HVolume::HVolume(double voxelSize, vtkSmartPointer<vtkPolyData> initialModelData
 	//Expand(bounds[1], bounds[3], bounds[5]);
 
 	Initialize(initialModelData);
-	InitializeVTK(volumeModelData);
 }
 
 void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 {
 	this->initialModelData = initialModelData;
 
-	auto cells = initialModelData->GetPolys();
+	vtkNew<vtkPolyDataNormals> normals;
+	normals->SetInputData(initialModelData);
+	normals->ComputeCellNormalsOn();
+	normals->Update();
+
+	auto polyDataWithNormal = normals->GetOutput();
+	auto cellDatas = polyDataWithNormal->GetCellData();
+	auto cellNormals = cellDatas->GetNormals();
+
+	auto cells = polyDataWithNormal->GetPolys();
 	auto noc = cells->GetNumberOfCells();
-	auto points = initialModelData->GetPoints();
+	auto points = polyDataWithNormal->GetPoints();
 	auto nop = points->GetNumberOfPoints();
 
 	double rX = GetXLength() / voxelSize;
@@ -258,6 +297,7 @@ void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 	cout << xyz.x << ", " << xyz.y << ", " << xyz.z << ", "
 		<< XYZ.x << ", " << XYZ.y << ", " << XYZ.z << endl;
 
+	cout << "Voxel Size: " << voxelSize << endl;
 	cout << "Resolution x: " << resolutionX << ", y: " << resolutionY << ", z: " << resolutionZ << endl;
 
 	voxels.resize(resolutionX * resolutionY * resolutionZ);
@@ -277,11 +317,11 @@ void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 			}
 		}
 	}
-	int maxCellCount = 0;
 
+	int maxCellCount = 0;
 	for (int i = 0; i < noc; i++)
 	{
-		auto cell = initialModelData->GetCell(i);
+		auto cell = polyDataWithNormal->GetCell(i);
 		auto pi0 = cell->GetPointId(0);
 		auto pi1 = cell->GetPointId(1);
 		auto pi2 = cell->GetPointId(2);
@@ -289,6 +329,8 @@ void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 		points->GetPoint(pi0, (double*)&p0);
 		points->GetPoint(pi1, (double*)&p1);
 		points->GetPoint(pi2, (double*)&p2);
+
+		HVector3 normal(cellNormals->GetTuple(i));
 
 		HAABB taabb;
 		taabb.Expand(p0);
@@ -299,11 +341,14 @@ void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 		auto tmaxIndex = GetIndex(taabb.GetMaxPoint());
 
 		bool intersected = false;
-		for (size_t z = tminIndex.z; z <= tmaxIndex.z; z++)
+#pragma omp parallel for
+		for (int z = tminIndex.z; z <= tmaxIndex.z; z++)
 		{
-			for (size_t y = tminIndex.y; y <= tmaxIndex.y; y++)
+#pragma omp parallel for
+			for (int y = tminIndex.y; y <= tmaxIndex.y; y++)
 			{
-				for (size_t x = tminIndex.x; x <= tmaxIndex.x; x++)
+#pragma omp parallel for
+				for (int x = tminIndex.x; x <= tmaxIndex.x; x++)
 				{
 					auto& voxel = GetVoxel(x, y, z);
 					if (voxel.IsOccupied()) {
@@ -311,7 +356,7 @@ void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 						//continue;
 					}
 
-					if (voxel.IntersectsTriangle(p0, p1, p2)) {
+					if (voxel.IntersectsTriangle(p0, p1, p2, normal)) {
 						//cout << "Intersects : " << resolutionZ * z + resolutionY * y + x << endl;
 						voxel.SetOccupied(true);
 						voxel.SetCellId(i);
@@ -336,41 +381,4 @@ void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 	}
 
 	cout << "Maximum cell count in a voxel: " << maxCellCount << endl;
-}
-
-void HVolume::InitializeVTK(vtkSmartPointer<vtkPolyData> volumeModelData)
-{
-	if (nullptr == volumeModelData)
-	{
-		return;
-	}
-	
-	this->volumeModelData = volumeModelData;
-
-	if (nullptr == volumeModelData->GetPoints())
-	{
-		vtkNew<vtkPoints> voxelsPoints;
-		volumeModelData->SetPoints(voxelsPoints);
-	}
-
-	if (nullptr == volumeModelData->GetPolys())
-	{
-		vtkNew<vtkCellArray> voxelsQuads;
-		volumeModelData->SetPolys(voxelsQuads);
-	}
-
-	for (int z = 0; z < resolutionZ; z++)
-	{
-		for (int y = 0; y < resolutionY; y++)
-		{
-			for (int x = 0; x < resolutionX; x++)
-			{
-				auto& voxel = GetVoxel(x, y, z);
-				if (voxel.IsOccupied())
-				{
-					voxel.InsertToPolyData(volumeModelData);
-				}
-			}
-		}
-	}
 }

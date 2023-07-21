@@ -33,6 +33,7 @@
 #include <vtkSphereSource.h>
 #include <vtkConeSource.h>
 #include <vtkCubeSource.h>
+#include <vtkArrowSource.h>
 #include <vtkVectorText.h>
 
 #include <vtkPolyDataMapper.h>
@@ -65,6 +66,7 @@
 #include <vtkLinearExtrusionFilter.h>
 #include <vtkContourFilter.h>
 #include <vtkCellLocator.h>
+#include <vtkGlyph3D.h>
 
 #include <vtkSTLReader.h>
 #include <vtkOBJReader.h>

@@ -35,9 +35,9 @@ private:
 
 public slots:
     void OnMenuActionOpen();
-    void OnMenuActionAnalyzeOverhang();
-    void OnMenuActionAnalyzeVoxelize();
-    void OnMenuActionAnalyzeFindIsland();
+    void OnMenuActionFindOverhang();
+    void OnMenuActionVoxelize();
+    void OnMenuActionFindIsland();
     void OnSlider1ValueChaned(int value);
     void OnSlider2ValueChaned(int value);
     void OnSlider3ValueChaned(int value);

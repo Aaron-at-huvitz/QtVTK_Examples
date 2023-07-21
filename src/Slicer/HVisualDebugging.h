@@ -18,6 +18,9 @@ public:
 	static void AddSphere(double* center, double radius, unsigned char r, unsigned char g, unsigned char b);
 	static void AddSphere(const HVector3& center, double radius, unsigned char r, unsigned char g, unsigned char b);
 
+	static void AddArrow(double* position, unsigned char r, unsigned char g, unsigned char b);
+	static void AddArrow(const HVector3& position, unsigned char r, unsigned char g, unsigned char b);
+
 	static void Update();
 
 private:
@@ -45,9 +48,14 @@ private:
 	static vtkSmartPointer<vtkPolyDataMapper> s_spherePolyDataMapper;
 	static vtkSmartPointer<vtkPolyData> s_spherePolyData;
 
+	static vtkSmartPointer<vtkActor> s_arrowActor;
+	static vtkSmartPointer<vtkPolyDataMapper> s_arrowPolyDataMapper;
+	static vtkSmartPointer<vtkPolyData> s_arrowPolyData;
+
 	static void DrawLines();
 	static void DrawTriangle();
 	static void DrawSpheres();
+	static void DrawArrows();
 
 	static void ShowLines(bool bShow);
 	static void ToggleLines();
@@ -55,10 +63,13 @@ private:
 	static void ToggleTriangles();
 	static void ShowSpheres(bool bShow);
 	static void ToggleSpheres();
+	static void ShowArrows(bool bShow);
+	static void ToggleArrows();
 
 	static std::vector<std::tuple<HVector3, HVector3, unsigned char, unsigned char, unsigned char>> s_lineInfosToDraw;
 	static std::vector<std::tuple<HVector3, HVector3, HVector3, unsigned char, unsigned char, unsigned char>> s_triangleInfosToDraw;
 	static std::vector<std::tuple<HVector3, double, unsigned char, unsigned char, unsigned char>> s_sphereInfosToDraw;
+	static std::vector<std::tuple<HVector3, unsigned char, unsigned char, unsigned char>> s_arrowInfosToDraw;
 
 public:
 	friend class QVTKWidgetWindow;

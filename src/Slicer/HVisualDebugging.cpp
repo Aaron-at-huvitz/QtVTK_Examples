@@ -17,9 +17,14 @@ vtkSmartPointer<vtkActor> HVisualDebugging::s_sphereActor = nullptr;
 vtkSmartPointer<vtkPolyDataMapper> HVisualDebugging::s_spherePolyDataMapper = nullptr;
 vtkSmartPointer<vtkPolyData> HVisualDebugging::s_spherePolyData = nullptr;
 
+vtkSmartPointer<vtkActor> HVisualDebugging::s_arrowActor = nullptr;
+vtkSmartPointer<vtkPolyDataMapper> HVisualDebugging::s_arrowPolyDataMapper = nullptr;
+vtkSmartPointer<vtkPolyData> HVisualDebugging::s_arrowPolyData = nullptr;
+
 std::vector<std::tuple<HVector3, HVector3, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_lineInfosToDraw;
 std::vector<std::tuple<HVector3, HVector3, HVector3, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_triangleInfosToDraw;
 std::vector<std::tuple<HVector3, double, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_sphereInfosToDraw;
+std::vector<std::tuple<HVector3, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_arrowInfosToDraw;
 
 HVisualDebugging::HVisualDebugging()
 {
@@ -109,6 +114,29 @@ void HVisualDebugging::Initialize(vtkSmartPointer<vtkRenderer> renderer)
 		s_renderer->AddActor(s_sphereActor);
 	}
 #pragma endregion
+
+#pragma region Arrow
+	{
+		s_arrowPolyData = vtkSmartPointer<vtkPolyData>::New();
+		s_arrowPolyDataMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+		s_arrowPolyDataMapper->SetInputData(s_arrowPolyData);
+		s_arrowPolyDataMapper->SetScalarModeToUsePointData();
+		s_arrowActor = vtkSmartPointer<vtkActor>::New();
+		s_arrowActor->SetMapper(s_arrowPolyDataMapper);
+
+		vtkNew<vtkPoints> points;
+		s_arrowPolyData->SetPoints(points);
+
+		vtkNew<vtkCellArray> triangles;
+		s_arrowPolyData->SetPolys(triangles);
+
+		vtkNew<vtkUnsignedCharArray> colors;
+		colors->SetNumberOfComponents(3);
+		s_arrowPolyData->GetCellData()->SetScalars(colors);
+
+		s_renderer->AddActor(s_arrowActor);
+	}
+#pragma endregion
 }
 
 void HVisualDebugging::Terminate()
@@ -147,7 +175,6 @@ void HVisualDebugging::Terminate()
 	}
 #pragma endregion
 
-
 #pragma region Sphere
 	if (nullptr != s_spherePolyData)
 	{
@@ -164,6 +191,23 @@ void HVisualDebugging::Terminate()
 		s_sphereActor = nullptr;
 	}
 #pragma endregion
+
+#pragma region Arrow
+	if (nullptr != s_arrowPolyData)
+	{
+		s_arrowPolyData = nullptr;
+	}
+
+	if (nullptr != s_arrowPolyDataMapper)
+	{
+		s_arrowPolyDataMapper = nullptr;
+	}
+
+	if (nullptr != s_arrowActor)
+	{
+		s_arrowActor = nullptr;
+	}
+#pragma endregion
 }
 
 void HVisualDebugging::Update()
@@ -171,6 +215,7 @@ void HVisualDebugging::Update()
 	DrawLines();
 	DrawTriangle();
 	DrawSpheres();
+	DrawArrows();
 }
 
 void HVisualDebugging::DrawLines()
@@ -305,6 +350,47 @@ void HVisualDebugging::DrawSpheres()
 	s_sphereInfosToDraw.clear();
 }
 
+void HVisualDebugging::DrawArrows()
+{
+	if (s_arrowInfosToDraw.empty()) return;
+
+	vtkNew<vtkAppendPolyData> appendFilter;
+	appendFilter->AddInputData(s_arrowPolyData);
+	vtkNew<vtkUnsignedCharArray> colors;
+	colors->SetNumberOfComponents(3);
+
+	for (auto& arrowInfo : s_arrowInfosToDraw)
+	{
+		auto center = std::get<0>(arrowInfo);
+		auto r = std::get<1>(arrowInfo);
+		auto g = std::get<2>(arrowInfo);
+		auto b = std::get<3>(arrowInfo);
+
+		vtkNew<vtkArrowSource> arrowSource;
+		//arrowSource->SetArrowOrigin((double*)&center);
+		arrowSource->SetShaftRadius(0.25);
+		arrowSource->SetTipRadius(0.5);
+		arrowSource->Update();
+
+		appendFilter->AddInputConnection(arrowSource->GetOutputPort());
+
+		auto nop = arrowSource->GetOutput()->GetNumberOfPoints();
+		for (size_t i = 0; i < nop; i++)
+		{
+			unsigned char uc[3]{ r, g, b };
+			colors->InsertNextTypedTuple(uc);
+			colors->InsertNextTypedTuple(uc);
+			colors->InsertNextTypedTuple(uc);
+		}
+		arrowSource->GetOutput()->GetPointData()->SetScalars(colors);
+	}
+	appendFilter->Update();
+
+	s_arrowPolyData->ShallowCopy(appendFilter->GetOutput());
+
+	s_arrowInfosToDraw.clear();
+}
+
 void HVisualDebugging::AddLine(double* p0, double* p1, unsigned char r, unsigned char g, unsigned char b)
 {
 	HVector3 v0{ p0[0], p0[1], p0[2] };
@@ -339,6 +425,17 @@ void HVisualDebugging::AddSphere(double* center, double radius, unsigned char r,
 void HVisualDebugging::AddSphere(const HVector3& center, double radius, unsigned char r, unsigned char g, unsigned char b)
 {
 	s_sphereInfosToDraw.push_back(std::make_tuple(center, radius, r, g, b));
+}
+
+void HVisualDebugging::AddArrow(double* center, unsigned char r, unsigned char g, unsigned char b)
+{
+	HVector3 c{ center[0], center[1], center[2] };
+	HVisualDebugging::AddArrow(c, r, g, b);
+}
+
+void HVisualDebugging::AddArrow(const HVector3& center, unsigned char r, unsigned char g, unsigned char b)
+{
+	s_arrowInfosToDraw.push_back(std::make_tuple(center, r, g, b));
 }
 
 void HVisualDebugging::ShowLines(bool bShow)
@@ -391,6 +488,24 @@ void HVisualDebugging::ToggleSpheres()
 	if (nullptr != s_sphereActor)
 	{
 		s_sphereActor->SetVisibility(!s_sphereActor->GetVisibility());
+		s_renderer->GetRenderWindow()->Render();
+	}
+}
+
+void HVisualDebugging::ShowArrows(bool bShow)
+{
+	if (nullptr != s_arrowActor)
+	{
+		s_arrowActor->SetVisibility(bShow);
+		s_renderer->GetRenderWindow()->Render();
+	}
+}
+
+void HVisualDebugging::ToggleArrows()
+{
+	if (nullptr != s_arrowActor)
+	{
+		s_arrowActor->SetVisibility(!s_arrowActor->GetVisibility());
 		s_renderer->GetRenderWindow()->Render();
 	}
 }

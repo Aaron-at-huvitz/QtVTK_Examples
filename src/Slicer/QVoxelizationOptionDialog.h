@@ -17,6 +17,9 @@ public:
     double VoxelSize() { return voxelSize; }
 
 public slots:
+    void OnPushButton_0_1();
+    void OnPushButton_0_2();
+    void OnPushButton_0_25();
     void OnPushButtonVoxelize();
     void OnPushButtonCancel();
 

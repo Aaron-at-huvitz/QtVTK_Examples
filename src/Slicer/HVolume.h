@@ -96,6 +96,7 @@ public:
 	void InsertToPolyData(vtkSmartPointer<vtkPolyData> polyData);
 
 	bool IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const HVector3& tp2);
+	bool IntersectsTriangle(const HVector3& tp0, const HVector3& tp1, const HVector3& tp2, const HVector3& tn);
 
 protected:
 	HVector3 center = { 0.0,  0.0,  0.0 };
@@ -155,11 +156,9 @@ class HVolume : public HAABB
 public:
 	//HVolume(double voxelSize, const HVector3& minPoint, const HVector3& maxPoint);
 
-	HVolume(double voxelSize, vtkSmartPointer<vtkPolyData> initialModelData, vtkSmartPointer<vtkPolyData> volumeModelData);
+	HVolume(double voxelSize, vtkSmartPointer<vtkPolyData> initialModelData);
 
 	void Initialize(vtkSmartPointer<vtkPolyData> initialModelData);
-
-	void InitializeVTK(vtkSmartPointer<vtkPolyData> volumeModelData);
 
 	inline HVolumeIndex GetIndex(const HVector3& position)
 	{
@@ -187,11 +186,13 @@ public:
 		return voxels[resolutionX * resolutionY * z + resolutionX * y + x];
 	}
 
+	inline double GetVoxelSize() { return voxelSize; }
+
 	inline int GetResolutionX() const { return resolutionX; }
 	inline int GetResolutionY() const { return resolutionY; }
 	inline int GetResolutionZ() const { return resolutionZ; }
 
-	inline vtkSmartPointer<vtkPolyData> GetPolyData() { return volumeModelData; }
+	inline const std::vector<HVoxel>& GetVoxels() const { return voxels; }
 
 protected:
 	double voxelSize = 0.5;
@@ -201,5 +202,4 @@ protected:
 
 	std::vector<HVoxel> voxels;
 	vtkSmartPointer<vtkPolyData> initialModelData = nullptr;
-	vtkSmartPointer<vtkPolyData> volumeModelData = nullptr;
 };

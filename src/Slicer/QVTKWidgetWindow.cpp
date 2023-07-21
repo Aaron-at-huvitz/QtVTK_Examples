@@ -96,10 +96,10 @@ void QVTKWidgetWindow::InitializeMenuBar()
     auto fileMenu = ui.menuBar->addMenu("File (&F)");
     fileMenu->addAction("Open (&O)", this, SLOT(OnMenuActionOpen()));
 
-    auto analyzeMenu = ui.menuBar->addMenu("Analyze (&A)");
-    analyzeMenu->addAction("Overhang (&O)", this, SLOT(OnMenuActionAnalyzeOverhang()));
-    analyzeMenu->addAction("Find Island (&I)", this, SLOT(OnMenuActionAnalyzeFindIsland()));
-    analyzeMenu->addAction("Voxelize (&V)", this, SLOT(OnMenuActionAnalyzeVoxelize()));
+    auto operationMenu = ui.menuBar->addMenu("Operation (&O)");
+    operationMenu->addAction("Find Overhang (&O)", this, SLOT(OnMenuActionFindOverhang()));
+    operationMenu->addAction("Find Island (&I)", this, SLOT(OnMenuActionFindIsland()));
+    operationMenu->addAction("Voxelize (&V)", this, SLOT(OnMenuActionVoxelize()));
 }
 
 void QVTKWidgetWindow::InitializeSliders()
@@ -123,7 +123,7 @@ void QVTKWidgetWindow::OnMenuActionOpen()
     }
 }
 
-void QVTKWidgetWindow::OnMenuActionAnalyzeOverhang()
+void QVTKWidgetWindow::OnMenuActionFindOverhang()
 {
     if (nullptr != printingModel)
     {
@@ -136,7 +136,7 @@ void QVTKWidgetWindow::OnMenuActionAnalyzeOverhang()
     }
 }
 
-void QVTKWidgetWindow::OnMenuActionAnalyzeVoxelize()
+void QVTKWidgetWindow::OnMenuActionVoxelize()
 {
     if (nullptr != printingModel)
     {
@@ -166,7 +166,7 @@ void QVTKWidgetWindow::OnMenuActionAnalyzeVoxelize()
     }
 }
 
-void QVTKWidgetWindow::OnMenuActionAnalyzeFindIsland()
+void QVTKWidgetWindow::OnMenuActionFindIsland()
 {
     if (nullptr != printingModel)
     {
@@ -311,19 +311,24 @@ void QVTKWidgetWindow::keyReleaseEvent(QKeyEvent* event)
     else if (event->key() == Qt::Key_Space)
     {
         HVector3 p0, p1, p2;
-        p0.x = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
-        p0.y = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
-        p0.z = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+        p0.x = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        p0.y = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        p0.z = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
 
-        p1.x = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
-        p1.y = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
-        p1.z = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+        p1.x = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        p1.y = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        p1.z = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
 
-        p2.x = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
-        p2.y = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
-        p2.z = -1.0 + static_cast<double>(rand()) / (static_cast<double>(RAND_MAX / 2.0)) - 1.0;
+        p2.x = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        p2.y = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        p2.z = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
 
-        HVisualDebugging::AddTriangle(p0, p1, p2, 255, 255, 0);
+        unsigned char r = unsigned char(static_cast<double>(rand()) / (static_cast<double>(RAND_MAX)) * 255);
+        unsigned char g = unsigned char(static_cast<double>(rand()) / (static_cast<double>(RAND_MAX)) * 255);
+        unsigned char b = unsigned char(static_cast<double>(rand()) / (static_cast<double>(RAND_MAX)) * 255);
+
+        HVisualDebugging::AddTriangle(p0, p1, p2, r, g, b);
+        ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
     }
 }
 
