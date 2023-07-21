@@ -18,6 +18,8 @@ public:
 	static void AddSphere(double* center, double radius, unsigned char r, unsigned char g, unsigned char b);
 	static void AddSphere(const HVector3& center, double radius, unsigned char r, unsigned char g, unsigned char b);
 
+	static void Update();
+
 private:
 	HVisualDebugging();
 	~HVisualDebugging();
@@ -25,8 +27,6 @@ private:
 	static void Initialize(vtkSmartPointer<vtkRenderer> renderer);
 
 	static void Terminate();
-
-	static void Update();
 
 	static HVisualDebugging* s_instance;
 
@@ -45,12 +45,20 @@ private:
 	static vtkSmartPointer<vtkPolyDataMapper> s_spherePolyDataMapper;
 	static vtkSmartPointer<vtkPolyData> s_spherePolyData;
 
+	static void DrawLines();
+	static void DrawTriangle();
+	static void DrawSpheres();
+
 	static void ShowLines(bool bShow);
 	static void ToggleLines();
 	static void ShowTriangles(bool bShow);
 	static void ToggleTriangles();
 	static void ShowSpheres(bool bShow);
 	static void ToggleSpheres();
+
+	static std::vector<std::tuple<HVector3, HVector3, unsigned char, unsigned char, unsigned char>> s_lineInfosToDraw;
+	static std::vector<std::tuple<HVector3, HVector3, HVector3, unsigned char, unsigned char, unsigned char>> s_triangleInfosToDraw;
+	static std::vector<std::tuple<HVector3, double, unsigned char, unsigned char, unsigned char>> s_sphereInfosToDraw;
 
 public:
 	friend class QVTKWidgetWindow;

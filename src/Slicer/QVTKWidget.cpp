@@ -2,6 +2,8 @@
 
 #include "vtk_header_files.h"
 
+#include "HVisualDebugging.h"
+
 QVTKWidget::QVTKWidget(QWidget* parent)
 	: QWidget(parent)
 {
@@ -16,12 +18,12 @@ QVTKWidget::QVTKWidget(QWidget* parent)
 	layout->addWidget(vtkWidget);
 	this->setLayout(layout);
 
-	//this->updateTimer = new QTimer(this);
-	//this->updateTimer->setInterval(16);
+	this->updateTimer = new QTimer(this);
+	this->updateTimer->setInterval(16);
 
-	//connect(updateTimer, SIGNAL(timeout()), this, SLOT(update()));
+	connect(updateTimer, SIGNAL(timeout()), this, SLOT(update()));
 
-	//this->updateTimer->start();
+	this->updateTimer->start();
 }
 
 QVTKWidget::~QVTKWidget()
@@ -31,4 +33,5 @@ QVTKWidget::~QVTKWidget()
 void QVTKWidget::update()
 {
 	//cout << "QVTKWidget::update()" << endl;
+	HVisualDebugging::Update();
 }

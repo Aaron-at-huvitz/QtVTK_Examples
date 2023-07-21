@@ -17,6 +17,9 @@ vtkSmartPointer<vtkActor> HVisualDebugging::s_sphereActor = nullptr;
 vtkSmartPointer<vtkPolyDataMapper> HVisualDebugging::s_spherePolyDataMapper = nullptr;
 vtkSmartPointer<vtkPolyData> HVisualDebugging::s_spherePolyData = nullptr;
 
+std::vector<std::tuple<HVector3, HVector3, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_lineInfosToDraw;
+std::vector<std::tuple<HVector3, HVector3, HVector3, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_triangleInfosToDraw;
+std::vector<std::tuple<HVector3, double, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_sphereInfosToDraw;
 
 HVisualDebugging::HVisualDebugging()
 {
@@ -43,6 +46,7 @@ void HVisualDebugging::Initialize(vtkSmartPointer<vtkRenderer> renderer)
 		s_linePolyData = vtkSmartPointer<vtkPolyData>::New();
 		s_linePolyDataMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 		s_linePolyDataMapper->SetInputData(s_linePolyData);
+		s_linePolyDataMapper->SetScalarModeToUsePointData();
 		s_lineActor = vtkSmartPointer<vtkActor>::New();
 		s_lineActor->SetMapper(s_linePolyDataMapper);
 
@@ -65,6 +69,7 @@ void HVisualDebugging::Initialize(vtkSmartPointer<vtkRenderer> renderer)
 		s_trianglePolyData = vtkSmartPointer<vtkPolyData>::New();
 		s_trianglePolyDataMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 		s_trianglePolyDataMapper->SetInputData(s_trianglePolyData);
+		s_trianglePolyDataMapper->SetScalarModeToUsePointData();
 		s_triangleActor = vtkSmartPointer<vtkActor>::New();
 		s_triangleActor->SetMapper(s_trianglePolyDataMapper);
 
@@ -87,6 +92,7 @@ void HVisualDebugging::Initialize(vtkSmartPointer<vtkRenderer> renderer)
 		s_spherePolyData = vtkSmartPointer<vtkPolyData>::New();
 		s_spherePolyDataMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 		s_spherePolyDataMapper->SetInputData(s_spherePolyData);
+		s_spherePolyDataMapper->SetScalarModeToUsePointData();
 		s_sphereActor = vtkSmartPointer<vtkActor>::New();
 		s_sphereActor->SetMapper(s_spherePolyDataMapper);
 
@@ -162,7 +168,141 @@ void HVisualDebugging::Terminate()
 
 void HVisualDebugging::Update()
 {
+	DrawLines();
+	DrawTriangle();
+	DrawSpheres();
+}
 
+void HVisualDebugging::DrawLines()
+{
+	if (s_lineInfosToDraw.empty()) return;
+
+	vtkNew<vtkPoints> points;
+	vtkNew<vtkCellArray> lines;
+	vtkNew<vtkUnsignedCharArray> colors;
+	colors->SetNumberOfComponents(3);
+	
+	for (auto& lineInfo : s_lineInfosToDraw)
+	{
+		auto p0 = std::get<0>(lineInfo);
+		auto p1 = std::get<1>(lineInfo);
+		auto r = std::get<2>(lineInfo);
+		auto g = std::get<3>(lineInfo);
+		auto b = std::get<4>(lineInfo);
+
+		auto pi0 = points->InsertNextPoint((double*)&p0);
+		auto pi1 = points->InsertNextPoint((double*)&p1);
+
+		vtkIdType pids[] = {pi0, pi1};
+
+		lines->InsertNextCell(2, pids);
+
+		unsigned char uc[3]{ r, g, b };
+		colors->InsertNextTypedTuple(uc);
+		colors->InsertNextTypedTuple(uc);
+	}
+
+	vtkSmartPointer<vtkPolyData> linePolyData = vtkSmartPointer<vtkPolyData>::New();
+	linePolyData->SetPoints(points);
+	linePolyData->SetLines(lines);
+	linePolyData->GetPointData()->SetScalars(colors);
+
+	vtkSmartPointer<vtkAppendPolyData> appendFilter = vtkSmartPointer<vtkAppendPolyData>::New();
+	appendFilter->AddInputData(s_linePolyData);
+	appendFilter->AddInputData(linePolyData);
+	appendFilter->Update();
+
+	s_linePolyData->ShallowCopy(appendFilter->GetOutput());
+
+	s_lineInfosToDraw.clear();
+}
+
+void HVisualDebugging::DrawTriangle()
+{
+	if (s_triangleInfosToDraw.empty()) return;
+
+	vtkNew<vtkPoints> points;
+	vtkNew<vtkCellArray> triangles;
+	vtkNew<vtkUnsignedCharArray> colors;
+	colors->SetNumberOfComponents(3);
+
+	for (auto& triangleInfo : s_triangleInfosToDraw)
+	{
+		auto p0 = std::get<0>(triangleInfo);
+		auto p1 = std::get<1>(triangleInfo);
+		auto p2 = std::get<2>(triangleInfo);
+		auto r = std::get<3>(triangleInfo);
+		auto g = std::get<4>(triangleInfo);
+		auto b = std::get<5>(triangleInfo);
+
+		auto pi0 = points->InsertNextPoint((double*)&p0);
+		auto pi1 = points->InsertNextPoint((double*)&p1);
+		auto pi2 = points->InsertNextPoint((double*)&p2);
+
+		vtkIdType pids[] = { pi0, pi1, pi2 };
+
+		triangles->InsertNextCell(3, pids);
+
+		unsigned char uc[3]{ r, g, b };
+		colors->InsertNextTypedTuple(uc);
+		colors->InsertNextTypedTuple(uc);
+		colors->InsertNextTypedTuple(uc);
+	}
+
+	vtkNew<vtkPolyData> trianglePolyData;
+	trianglePolyData->SetPoints(points);
+	trianglePolyData->SetPolys(triangles);
+	trianglePolyData->GetPointData()->SetScalars(colors);
+
+	vtkNew<vtkAppendPolyData> appendFilter;
+	appendFilter->AddInputData(s_trianglePolyData);
+	appendFilter->AddInputData(trianglePolyData);
+	appendFilter->Update();
+
+	s_trianglePolyData->ShallowCopy(appendFilter->GetOutput());
+
+	s_triangleInfosToDraw.clear();
+}
+
+void HVisualDebugging::DrawSpheres()
+{
+	if (s_sphereInfosToDraw.empty()) return;
+	
+	vtkNew<vtkAppendPolyData> appendFilter;
+	appendFilter->AddInputData(s_spherePolyData);
+	vtkNew<vtkUnsignedCharArray> colors;
+	colors->SetNumberOfComponents(3);
+
+	for (auto& sphereInfo : s_sphereInfosToDraw)
+	{
+		auto center = std::get<0>(sphereInfo);
+		auto radius = std::get<1>(sphereInfo);
+		auto r = std::get<2>(sphereInfo);
+		auto g = std::get<3>(sphereInfo);
+		auto b = std::get<4>(sphereInfo);
+
+		vtkNew<vtkSphereSource> sphereSource;
+		sphereSource->SetCenter((double*)&center);
+		sphereSource->SetRadius(radius);
+		sphereSource->Update();
+	
+		appendFilter->AddInputConnection(sphereSource->GetOutputPort());
+
+		auto nop = sphereSource->GetOutput()->GetNumberOfPoints();
+		for (size_t i = 0; i < nop; i++)
+		{
+			unsigned char uc[3]{ r, g, b };
+			colors->InsertNextTypedTuple(uc);
+			colors->InsertNextTypedTuple(uc);
+			colors->InsertNextTypedTuple(uc);
+		}
+		sphereSource->GetOutput()->GetPointData()->SetScalars(colors);
+	}
+	appendFilter->Update();
+
+	s_spherePolyData->ShallowCopy(appendFilter->GetOutput());
+
+	s_sphereInfosToDraw.clear();
 }
 
 void HVisualDebugging::AddLine(double* p0, double* p1, unsigned char r, unsigned char g, unsigned char b)
@@ -174,27 +314,7 @@ void HVisualDebugging::AddLine(double* p0, double* p1, unsigned char r, unsigned
 
 void HVisualDebugging::AddLine(const HVector3& p0, const HVector3& p1, unsigned char r, unsigned char g, unsigned char b)
 {
-	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-	auto pi0 = points->InsertNextPoint((double*)&p0);
-	auto pi1 = points->InsertNextPoint((double*)&p1);
-
-	vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-	line->GetPointIds()->SetId(0, pi0);
-	line->GetPointIds()->SetId(1, pi1);
-
-	vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
-	lines->InsertNextCell(line);
-
-	vtkSmartPointer<vtkPolyData> linePolyData = vtkSmartPointer<vtkPolyData>::New();
-	linePolyData->SetPoints(points);
-	linePolyData->SetLines(lines);
-
-	vtkSmartPointer<vtkAppendPolyData> appendFilter = vtkSmartPointer<vtkAppendPolyData>::New();
-	appendFilter->AddInputData(s_linePolyData);
-	appendFilter->AddInputData(linePolyData);
-	appendFilter->Update();
-
-	s_linePolyData->ShallowCopy(appendFilter->GetOutput());
+	s_lineInfosToDraw.push_back(std::make_tuple(p0, p1, r, g, b));
 }
 
 void HVisualDebugging::AddTriangle(double* p0, double* p1, double* p2, unsigned char r, unsigned char g, unsigned char b)
@@ -207,29 +327,7 @@ void HVisualDebugging::AddTriangle(double* p0, double* p1, double* p2, unsigned 
 
 void HVisualDebugging::AddTriangle(const HVector3& p0, const HVector3& p1, const HVector3& p2, unsigned char r, unsigned char g, unsigned char b)
 {
-	vtkNew<vtkPoints> points;
-	auto pi0 = points->InsertNextPoint((double*)&p0);
-	auto pi1 = points->InsertNextPoint((double*)&p1);
-	auto pi2 = points->InsertNextPoint((double*)&p2);
-
-	vtkNew<vtkTriangle> triangle;
-	triangle->GetPointIds()->SetId(0, pi0);
-	triangle->GetPointIds()->SetId(1, pi1);
-	triangle->GetPointIds()->SetId(2, pi2);
-
-	vtkNew<vtkCellArray> triangles;
-	triangles->InsertNextCell(triangle);
-
-	vtkNew<vtkPolyData> trianglePolyData;
-	trianglePolyData->SetPoints(points);
-	trianglePolyData->SetPolys(triangles);
-
-	vtkNew<vtkAppendPolyData> appendFilter;
-	appendFilter->AddInputData(s_trianglePolyData);
-	appendFilter->AddInputData(trianglePolyData);
-	appendFilter->Update();
-
-	s_trianglePolyData->ShallowCopy(appendFilter->GetOutput());
+	s_triangleInfosToDraw.push_back(std::make_tuple(p0, p1, p2, r, g, b));
 }
 
 void HVisualDebugging::AddSphere(double* center, double radius, unsigned char r, unsigned char g, unsigned char b)
@@ -240,16 +338,7 @@ void HVisualDebugging::AddSphere(double* center, double radius, unsigned char r,
 
 void HVisualDebugging::AddSphere(const HVector3& center, double radius, unsigned char r, unsigned char g, unsigned char b)
 {
-	vtkNew<vtkSphereSource> sphereSource;
-	sphereSource->SetCenter((double*)&center);
-	sphereSource->SetRadius(radius);
-
-	vtkSmartPointer<vtkAppendPolyData> appendFilter = vtkSmartPointer<vtkAppendPolyData>::New();
-	appendFilter->AddInputData(s_spherePolyData);
-	appendFilter->AddInputConnection(sphereSource->GetOutputPort());
-	appendFilter->Update();
-
-	s_spherePolyData->ShallowCopy(appendFilter->GetOutput());
+	s_sphereInfosToDraw.push_back(std::make_tuple(center, radius, r, g, b));
 }
 
 void HVisualDebugging::ShowLines(bool bShow)
