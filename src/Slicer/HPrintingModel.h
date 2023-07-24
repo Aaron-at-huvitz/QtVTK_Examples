@@ -18,7 +18,7 @@ public:
 	void ClearVolumeModel();
 	void ClearInitialModel();
 
-	void Voxelize(double voxelSize);
+	void Voxelize(vtkSmartPointer<vtkPolyData> modelData, double voxelSize);
 
 	void AnalyzeOverhang();
 	void AnalyzeIsland();

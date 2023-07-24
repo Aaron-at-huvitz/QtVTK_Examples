@@ -162,7 +162,7 @@ void HPrintingModel::ClearInitialModel()
     }
 }
 
-void HPrintingModel::Voxelize(double voxelSize)
+void HPrintingModel::Voxelize(vtkSmartPointer<vtkPolyData> modelData, double voxelSize)
 {
     ClearVolumeModel();
 
@@ -170,7 +170,7 @@ void HPrintingModel::Voxelize(double voxelSize)
     vtkNew<vtkPoints> points;
     polyData->SetPoints(points);
 
-    volume = new HVolume(voxelSize, initialModelData);
+    volume = new HVolume(voxelSize, modelData);
     auto voxels = volume->GetVoxels();
     auto resolutionX = volume->GetResolutionX();
     auto resolutionY = volume->GetResolutionY();
@@ -374,6 +374,14 @@ void HPrintingModel::AnalyzeOverhang()
         //actor->SetPosition(0, 0, -(bounds[5] - bounds[4]) * 2);
         //renderer->AddActor(actor);
     }
+
+    //auto bounds = initialModelData->GetBounds();
+    //auto xLen = bounds[1] - bounds[0];
+    //auto yLen = bounds[3] - bounds[2];
+    //auto zLen = bounds[5] - bounds[4];
+    //auto maxLen = std::min(std::min(xLen, yLen), zLen);
+    //auto voxelSize = maxLen / 100.0;
+    //Voxelize(overhangModelData, voxelSize);
 }
 
 void HPrintingModel::AnalyzeIsland()
@@ -603,6 +611,8 @@ void HPrintingModel::Pick(double x, double y)
             }
         }
 
+        auto totalArea = 0.0;
+
         for (auto& selectedCellId : visited)
         {
             auto scell = overhangModelData->GetCell(selectedCellId);
@@ -614,10 +624,15 @@ void HPrintingModel::Pick(double x, double y)
 
             HVisualDebugging::AddTriangle(p0, p1, p2, 255, 0, 0);
 
+            auto area = TrianglArea(p0, p1, p2);
+            totalArea += area;
+
             //HVisualDebugging::AddLine(p0, p1, 255, 0, 0);
             //HVisualDebugging::AddLine(p1, p2, 255, 0, 0);
             //HVisualDebugging::AddLine(p2, p0, 255, 0, 0);
         }
+
+        cout << "Total AREA : " << totalArea << endl;
     }
 }
 

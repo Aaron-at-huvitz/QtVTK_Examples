@@ -159,7 +159,7 @@ void QVTKWidgetWindow::OnMenuActionVoxelize()
         if (voxelize)
         {
             StopWatch::Start("Voxelize");
-            printingModel->Voxelize(voxelSize);
+            printingModel->Voxelize(printingModel->GetInitialModelData(), voxelSize);
             ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
             StopWatch::Stop("Voxelize");
         }

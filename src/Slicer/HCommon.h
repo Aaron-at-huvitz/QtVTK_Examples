@@ -8,22 +8,22 @@ public:
     HVector3(double x = 0.0f, double y = 0.0f, double z = 0.0f) : x(x), y(y), z(z) {}
 
     // Addition using operator overloading
-    HVector3 operator+(const HVector3& other) const {
+    inline HVector3 operator+(const HVector3& other) const {
         return HVector3(x + other.x, y + other.y, z + other.z);
     }
 
     // Subtraction using operator overloading
-    HVector3 operator-(const HVector3& other) const {
+    inline HVector3 operator-(const HVector3& other) const {
         return HVector3(x - other.x, y - other.y, z - other.z);
     }
 
     // Scalar multiplication using operator overloading
-    HVector3 operator*(double scalar) const {
+    inline HVector3 operator*(double scalar) const {
         return HVector3(x * scalar, y * scalar, z * scalar);
     }
 
     // Scalar division using operator overloading
-    HVector3 operator/(float scalar) const {
+    inline HVector3 operator/(float scalar) const {
         if (scalar == 0.0f) {
             std::cerr << "Error: Division by zero!" << std::endl;
             return *this; // You might want to handle this error better.
@@ -32,20 +32,24 @@ public:
     }
 
     // Dot product using operator overloading
-    double operator*(const HVector3& other) const {
+    inline double operator*(const HVector3& other) const {
         return x * other.x + y * other.y + z * other.z;
     }
 
     // Cross product using operator overloading
-    HVector3 operator^(const HVector3& other) const {
+    inline HVector3 operator^(const HVector3& other) const {
         return HVector3(y * other.z - z * other.y,
             z * other.x - x * other.z,
             x * other.y - y * other.x);
     }
 
+    inline double magnitude() {
+        return std::sqrt(x * x + y * y + z * z);
+    }
+
     // Normalize the vector
-    void normalize() {
-        float length = std::sqrt(x * x + y * y + z * z);
+    inline void normalize() {
+        double length = magnitude();
         if (length != 0.0f) {
             x /= length;
             y /= length;
@@ -53,3 +57,12 @@ public:
         }
     }
 };
+
+inline double TrianglArea(const HVector3& p0, const HVector3& p1, const HVector3& p2)
+{
+    auto d01 = p1 - p0;
+    auto d02 = p2 - p0;
+    auto cross = d01 ^ d02;
+    auto area = 0.5 * cross.magnitude();
+    return area;
+}
