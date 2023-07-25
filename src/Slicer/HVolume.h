@@ -139,12 +139,22 @@ public:
 	inline bool IsOccupied() const { return occupied; }
 	inline void SetOccupied(bool isOccupied) { occupied = isOccupied; }
 
+	inline const std::set<int>& GetCellIds() const { return cellIds; }
 	inline void SetCellId(int id) { cellIds.insert(id); }
 
-	std::set<int> cellIds;
+	inline double GetMinimumDistance() const { return minimumDistance; }
+	inline void SetMinimumDistance(double distance) { minimumDistance = distance; }
+
+	inline int GetMinimumDistanceCellId() const { return minimumDistanceCellId; }
+	inline void SetMinimumDistanceCellId(int cellId) { minimumDistanceCellId = cellId; }
 
 protected:
 	bool occupied = false;
+
+	std::set<int> cellIds;
+
+	double minimumDistance = DBL_MAX;
+	int minimumDistanceCellId = -1;
 };
 
 struct HVolumeIndex {
@@ -201,5 +211,5 @@ protected:
 	int resolutionZ = 0;
 
 	std::vector<HVoxel> voxels;
-	vtkSmartPointer<vtkPolyData> initialModelData = nullptr;
+	vtkSmartPointer<vtkPolyData> modelData = nullptr;
 };

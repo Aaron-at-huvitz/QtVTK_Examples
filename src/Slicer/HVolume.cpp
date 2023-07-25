@@ -261,20 +261,14 @@ HVolume::HVolume(double voxelSize, vtkSmartPointer<vtkPolyData> initialModelData
 
 void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 {
-	this->initialModelData = initialModelData;
+	modelData = initialModelData;
 
-	vtkNew<vtkPolyDataNormals> normals;
-	normals->SetInputData(initialModelData);
-	normals->ComputeCellNormalsOn();
-	normals->Update();
-
-	auto polyDataWithNormal = normals->GetOutput();
-	auto cellDatas = polyDataWithNormal->GetCellData();
+	auto cellDatas = modelData->GetCellData();
 	auto cellNormals = cellDatas->GetNormals();
 
-	auto cells = polyDataWithNormal->GetPolys();
+	auto cells = modelData->GetPolys();
 	auto noc = cells->GetNumberOfCells();
-	auto points = polyDataWithNormal->GetPoints();
+	auto points = modelData->GetPoints();
 	auto nop = points->GetNumberOfPoints();
 
 	double rX = GetXLength() / voxelSize;
@@ -321,7 +315,7 @@ void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 	int maxCellCount = 0;
 	for (int i = 0; i < noc; i++)
 	{
-		auto cell = polyDataWithNormal->GetCell(i);
+		auto cell = modelData->GetCell(i);
 		auto pi0 = cell->GetPointId(0);
 		auto pi1 = cell->GetPointId(1);
 		auto pi2 = cell->GetPointId(2);
@@ -329,6 +323,8 @@ void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 		points->GetPoint(pi0, (double*)&p0);
 		points->GetPoint(pi1, (double*)&p1);
 		points->GetPoint(pi2, (double*)&p2);
+
+		auto centroid = TriangleCentroid(p0, p1, p2);
 
 		HVector3 normal(cellNormals->GetTuple(i));
 
@@ -362,8 +358,16 @@ void HVolume::Initialize(vtkSmartPointer<vtkPolyData> initialModelData)
 						voxel.SetCellId(i);
 						intersected = true;
 
-						if (maxCellCount < voxel.cellIds.size())
-							maxCellCount = voxel.cellIds.size();
+						if (maxCellCount < voxel.GetCellIds().size())
+							maxCellCount = voxel.GetCellIds().size();
+					}
+
+					auto dir = centroid - voxel.GetCenter();
+					auto distance = dir.magnitude();
+					if (distance < voxel.GetMinimumDistance())
+					{
+						voxel.SetMinimumDistance(distance);
+						voxel.SetMinimumDistanceCellId(i);
 					}
 				}
 			}

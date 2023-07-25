@@ -66,3 +66,8 @@ inline double TrianglArea(const HVector3& p0, const HVector3& p1, const HVector3
     auto area = 0.5 * cross.magnitude();
     return area;
 }
+
+inline HVector3 TriangleCentroid(const HVector3& p0, const HVector3& p1, const HVector3& p2)
+{
+    return (p0 + p1 + p2) / 3;
+}

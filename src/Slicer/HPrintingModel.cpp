@@ -40,8 +40,13 @@ void HPrintingModel::LoadModel(const QString& fileName)
     reader->SetFileName(fileName.toStdString().c_str());
     reader->Update();
 
+    vtkNew<vtkPolyDataNormals> normals;
+    normals->SetInputConnection(reader->GetOutputPort());
+    normals->ComputeCellNormalsOn();
+    normals->Update();
+
     initialModelData = vtkSmartPointer<vtkPolyData>::New();
-    initialModelData->DeepCopy(reader->GetOutput());
+    initialModelData->DeepCopy(normals->GetOutput());
 
     initialModelMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     initialModelMapper->SetInputConnection(reader->GetOutputPort());
@@ -220,19 +225,12 @@ void HPrintingModel::AnalyzeOverhang()
 
     overhangModelData = vtkSmartPointer<vtkPolyData>::New();
 
-    vtkNew<vtkPolyDataNormals> normals;
-    normals->SetInputData(initialModelData);
-    normals->ComputeCellNormalsOn();
-    normals->Update();
-
-    auto polyDataWithNormal = normals->GetOutput();
-
     std::vector<vtkIdType> cellsToCreate;
     std::vector<HVector3> cellNormalsToCreate;
 
-    auto cellDatas = polyDataWithNormal->GetCellData();
+    auto cellDatas = initialModelData->GetCellData();
     auto cellNormals = cellDatas->GetNormals();
-    for (size_t i = 0; i < polyDataWithNormal->GetNumberOfCells(); i++)
+    for (size_t i = 0; i < initialModelData->GetNumberOfCells(); i++)
     {
         auto normal = cellNormals->GetTuple(i);
 
@@ -242,7 +240,7 @@ void HPrintingModel::AnalyzeOverhang()
 
         if (angle < 45.0)
         {
-            auto cell = polyDataWithNormal->GetCell(i);
+            auto cell = initialModelData->GetCell(i);
             double p0[3], p1[3], p2[3];
             cell->GetPoints()->GetPoint(0, p0);
             cell->GetPoints()->GetPoint(1, p1);
@@ -268,23 +266,23 @@ void HPrintingModel::AnalyzeOverhang()
         auto oldCellId = cellsToCreate[i];
         auto oldCellNormal = cellNormalsToCreate[i];
 
-        auto oldCell = polyDataWithNormal->GetCell(oldCellId);
+        auto oldCell = initialModelData->GetCell(oldCellId);
         auto pi0 = oldCell->GetPointId(0);
         auto pi1 = oldCell->GetPointId(1);
         auto pi2 = oldCell->GetPointId(2);
         double p0[3], p1[3], p2[3];
         if (pointIdMapping.count(pi0) == 0) {
-            polyDataWithNormal->GetPoint(pi0, p0);
+            initialModelData->GetPoint(pi0, p0);
             auto npi0 = points->InsertNextPoint(p0);
             pointIdMapping[pi0] = npi0;
         }
         if (pointIdMapping.count(pi1) == 0) {
-            polyDataWithNormal->GetPoint(pi1, p1);
+            initialModelData->GetPoint(pi1, p1);
             auto npi1 = points->InsertNextPoint(p1);
             pointIdMapping[pi1] = npi1;
         }
         if (pointIdMapping.count(pi2) == 0) {
-            polyDataWithNormal->GetPoint(pi2, p2);
+            initialModelData->GetPoint(pi2, p2);
             auto npi2 = points->InsertNextPoint(p2);
             pointIdMapping[pi2] = npi2;
         }

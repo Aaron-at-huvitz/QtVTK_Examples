@@ -58,6 +58,9 @@
 #include <vtkAdaptiveSubdivisionFilter.h>
 #include <vtkLinearExtrusionFilter.h>
 #include <vtkContourFilter.h>
+#include <vtkSignedDistance.h>
+#include <vtkFlyingEdges3D.h>
+#include <vtkExtractSurface.h>
 
 #include <vtkSTLReader.h>
 #include <vtkOBJReader.h>
