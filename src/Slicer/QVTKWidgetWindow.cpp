@@ -129,7 +129,9 @@ void QVTKWidgetWindow::OnMenuActionFindOverhang()
     {
         StopWatch::Start("Analyze Overhang Face Normal");
 
-        printingModel->AnalyzeOverhang(1.0);
+        double reliefDistance = 2.5;
+
+        printingModel->AnalyzeOverhang(reliefDistance);
         ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
 
 #pragma region Draw Spheres
@@ -144,12 +146,43 @@ void QVTKWidgetWindow::OnMenuActionFindOverhang()
         }
 
         std::sort(anglesOfCells.begin(), anglesOfCells.end());
-        std::reverse(anglesOfCells.begin(), anglesOfCells.end());
 
-        int cnt = 0;
+        std::set<vtkIdType> relievedCells;
+
+        vtkNew<vtkCellLocator> cellLocator;
+        cellLocator->SetDataSet(pd);
+        cellLocator->BuildLocator();
+
+        {
+            auto& t = anglesOfCells[0];
+            auto cell = pd->GetCell(std::get<1>(t));
+            relievedCells.insert(std::get<1>(t));
+            auto points = cell->GetPoints();
+            double p0[3], p1[3], p2[3];
+            points->GetPoint(0, p0);
+            points->GetPoint(1, p1);
+            points->GetPoint(2, p2);
+            auto center = TriangleCentroid(p0, p1, p2);
+            auto minPoint = center + HVector3(-reliefDistance, -reliefDistance, -reliefDistance);
+            auto maxPoint = center + HVector3(reliefDistance, reliefDistance, reliefDistance);
+            double bb[6] = { minPoint.x, maxPoint.x, minPoint.y, maxPoint.y, minPoint.z, maxPoint.z };
+            vtkNew<vtkIdList> cellsInBB;
+            cellLocator->FindCellsWithinBounds(bb, cellsInBB);
+            auto noi = cellsInBB->GetNumberOfIds();
+            for (size_t i = 0; i < noi; i++)
+            {
+                relievedCells.insert(cellsInBB->GetId(i));
+            }
+
+            HVisualDebugging::AddCube(center, 1, 0, 0, 255);
+        }
+
         for (size_t i = 0; i < anglesOfCells.size(); i++)
         {
             auto& t = anglesOfCells[i];
+
+            if (relievedCells.count(std::get<1>(t)) != 0)
+                continue;
 
             auto cell = pd->GetCell(std::get<1>(t));
             auto points = cell->GetPoints();
@@ -158,12 +191,13 @@ void QVTKWidgetWindow::OnMenuActionFindOverhang()
             points->GetPoint(1, p1);
             points->GetPoint(2, p2);
 
-            auto ratio = (double)i / (double)anglesOfCells.size();
+            auto ratio = 1 - (double)i / (double)anglesOfCells.size();
             auto r = 255.0 * ratio;
             auto b = 255.0 * (1 - ratio);
             auto center = TriangleCentroid(p0, p1, p2);
 
             HVisualDebugging::AddSphere(center, 5 * ratio, (unsigned char)r, 0, (unsigned char)b);
+            //break;
         }
 #pragma endregion
 
