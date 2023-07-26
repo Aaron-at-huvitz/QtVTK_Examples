@@ -129,8 +129,43 @@ void QVTKWidgetWindow::OnMenuActionFindOverhang()
     {
         StopWatch::Start("Analyze Overhang Face Normal");
 
-        printingModel->AnalyzeOverhang();
+        printingModel->AnalyzeOverhang(1.0);
         ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+
+#pragma region Draw Spheres
+        std::vector<std::tuple<double, vtkIdType>> anglesOfCells;
+
+        auto pd = printingModel->GetOverhangModelData();
+        auto overhangIntensity = vtkFloatArray::SafeDownCast(pd->GetCellData()->GetScalars());
+        for (size_t i = 0; i < overhangIntensity->GetNumberOfValues(); i++)
+        {
+            auto angle = overhangIntensity->GetValue(i);
+            anglesOfCells.push_back(make_tuple(angle, i));
+        }
+
+        std::sort(anglesOfCells.begin(), anglesOfCells.end());
+        std::reverse(anglesOfCells.begin(), anglesOfCells.end());
+
+        int cnt = 0;
+        for (size_t i = 0; i < anglesOfCells.size(); i++)
+        {
+            auto& t = anglesOfCells[i];
+
+            auto cell = pd->GetCell(std::get<1>(t));
+            auto points = cell->GetPoints();
+            double p0[3], p1[3], p2[3];
+            points->GetPoint(0, p0);
+            points->GetPoint(1, p1);
+            points->GetPoint(2, p2);
+
+            auto ratio = (double)i / (double)anglesOfCells.size();
+            auto r = 255.0 * ratio;
+            auto b = 255.0 * (1 - ratio);
+            auto center = TriangleCentroid(p0, p1, p2);
+
+            HVisualDebugging::AddSphere(center, 5 * ratio, (unsigned char)r, 0, (unsigned char)b);
+        }
+#pragma endregion
 
         StopWatch::Stop("Analyze Overhang Face Normal");
     }

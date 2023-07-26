@@ -20,7 +20,7 @@ public:
 
 	void Voxelize(vtkSmartPointer<vtkPolyData> modelData, double voxelSize);
 
-	void AnalyzeOverhang();
+	void AnalyzeOverhang(double affectedDistance);
 	void AnalyzeIsland();
 
 	double GetLongestEdgeLength();

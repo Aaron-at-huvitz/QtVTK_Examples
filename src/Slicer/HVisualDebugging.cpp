@@ -15,7 +15,13 @@ vtkSmartPointer<vtkPolyData> HVisualDebugging::s_trianglePolyData = nullptr;
 
 vtkSmartPointer<vtkActor> HVisualDebugging::s_sphereActor = nullptr;
 vtkSmartPointer<vtkPolyDataMapper> HVisualDebugging::s_spherePolyDataMapper = nullptr;
+vtkSmartPointer<vtkGlyph3D> HVisualDebugging::s_sphereGlyph3D = nullptr;
 vtkSmartPointer<vtkPolyData> HVisualDebugging::s_spherePolyData = nullptr;
+
+vtkSmartPointer<vtkActor> HVisualDebugging::s_cubeActor = nullptr;
+vtkSmartPointer<vtkPolyDataMapper> HVisualDebugging::s_cubePolyDataMapper = nullptr;
+vtkSmartPointer<vtkGlyph3D> HVisualDebugging::s_cubeGlyph3D = nullptr;
+vtkSmartPointer<vtkPolyData> HVisualDebugging::s_cubePolyData = nullptr;
 
 vtkSmartPointer<vtkActor> HVisualDebugging::s_arrowActor = nullptr;
 vtkSmartPointer<vtkPolyDataMapper> HVisualDebugging::s_arrowPolyDataMapper = nullptr;
@@ -24,6 +30,7 @@ vtkSmartPointer<vtkPolyData> HVisualDebugging::s_arrowPolyData = nullptr;
 std::vector<std::tuple<HVector3, HVector3, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_lineInfosToDraw;
 std::vector<std::tuple<HVector3, HVector3, HVector3, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_triangleInfosToDraw;
 std::vector<std::tuple<HVector3, double, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_sphereInfosToDraw;
+std::vector<std::tuple<HVector3, double, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_cubeInfosToDraw;
 std::vector<std::tuple<HVector3, unsigned char, unsigned char, unsigned char>> HVisualDebugging::s_arrowInfosToDraw;
 
 HVisualDebugging::HVisualDebugging()
@@ -95,24 +102,83 @@ void HVisualDebugging::Initialize(vtkSmartPointer<vtkRenderer> renderer)
 #pragma region Sphere
 	{
 		s_spherePolyData = vtkSmartPointer<vtkPolyData>::New();
-		s_spherePolyDataMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-		s_spherePolyDataMapper->SetInputData(s_spherePolyData);
-		s_spherePolyDataMapper->SetScalarModeToUsePointData();
-		s_sphereActor = vtkSmartPointer<vtkActor>::New();
-		s_sphereActor->SetMapper(s_spherePolyDataMapper);
 
 		vtkNew<vtkPoints> points;
 		s_spherePolyData->SetPoints(points);
 
-		vtkNew<vtkCellArray> triangles;
-		s_spherePolyData->SetPolys(triangles);
+		vtkNew<vtkDoubleArray> scales;
+		scales->SetNumberOfComponents(1);
+		scales->SetName("Scales");
+		s_spherePolyData->GetPointData()->AddArray(scales);
 
 		vtkNew<vtkUnsignedCharArray> colors;
+		colors->SetName("Colors");
 		colors->SetNumberOfComponents(3);
-		s_spherePolyData->GetCellData()->SetScalars(colors);
+		s_spherePolyData->GetPointData()->AddArray(colors);
+
+		vtkNew<vtkSphereSource> sphereSource;
+		sphereSource->Update();
+
+		s_sphereGlyph3D = vtkSmartPointer<vtkGlyph3D>::New();
+		s_sphereGlyph3D->SetSourceConnection(sphereSource->GetOutputPort());
+		s_sphereGlyph3D->SetInputData(s_spherePolyData);
+		s_sphereGlyph3D->SetScaleModeToScaleByScalar();
+		s_sphereGlyph3D->SetColorModeToColorByScalar();
+
+		s_sphereGlyph3D->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "Scales");
+		s_sphereGlyph3D->SetInputArrayToProcess(3, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "Colors");
+		s_sphereGlyph3D->Update();
+
+		s_spherePolyDataMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+		s_spherePolyDataMapper->SetInputConnection(s_sphereGlyph3D->GetOutputPort());
+
+		s_sphereActor = vtkSmartPointer<vtkActor>::New();
+		s_sphereActor->SetMapper(s_spherePolyDataMapper);
+		//s_sphereActor->GetProperty()->SetAmbient(1.0);
+		//s_sphereActor->GetProperty()->SetDiffuse(0.0);
 
 		s_renderer->AddActor(s_sphereActor);
 	}
+#pragma endregion
+
+#pragma region Cube
+	s_cubePolyData = vtkSmartPointer<vtkPolyData>::New();
+
+	vtkNew<vtkPoints> points;
+	s_cubePolyData->SetPoints(points);
+
+	vtkNew<vtkDoubleArray> scales;
+	scales->SetNumberOfComponents(1);
+	scales->SetName("Scales");
+	s_cubePolyData->GetPointData()->AddArray(scales);
+
+	vtkNew<vtkUnsignedCharArray> colors;
+	colors->SetName("Colors");
+	colors->SetNumberOfComponents(3);
+	s_cubePolyData->GetPointData()->AddArray(colors);
+
+	vtkNew<vtkCubeSource> cubeSource;
+	cubeSource->Update();
+
+	s_cubeGlyph3D = vtkSmartPointer<vtkGlyph3D>::New();
+	s_cubeGlyph3D->SetSourceConnection(cubeSource->GetOutputPort());
+	s_cubeGlyph3D->SetInputData(s_cubePolyData);
+	s_cubeGlyph3D->SetScaleModeToScaleByScalar();
+	s_cubeGlyph3D->SetColorModeToColorByScalar();
+
+	s_cubeGlyph3D->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "Scales");
+	s_cubeGlyph3D->SetInputArrayToProcess(3, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "Colors");
+	s_cubeGlyph3D->Update();
+
+	s_cubePolyDataMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	s_cubePolyDataMapper->SetInputConnection(s_cubeGlyph3D->GetOutputPort());
+
+	s_cubeActor = vtkSmartPointer<vtkActor>::New();
+	s_cubeActor->SetMapper(s_cubePolyDataMapper);
+	//s_cubeActor->GetProperty()->SetAmbient(1.0);
+	//s_cubeActor->GetProperty()->SetDiffuse(0.0);
+
+	s_renderer->AddActor(s_cubeActor);
 #pragma endregion
 
 #pragma region Arrow
@@ -176,6 +242,11 @@ void HVisualDebugging::Terminate()
 #pragma endregion
 
 #pragma region Sphere
+	if (nullptr != s_sphereGlyph3D)
+	{
+		s_sphereGlyph3D = nullptr;
+	}
+
 	if (nullptr != s_spherePolyData)
 	{
 		s_spherePolyData = nullptr;
@@ -189,6 +260,28 @@ void HVisualDebugging::Terminate()
 	if (nullptr != s_sphereActor)
 	{
 		s_sphereActor = nullptr;
+	}
+#pragma endregion
+
+#pragma region Cube
+	if (nullptr != s_cubeGlyph3D)
+	{
+		s_cubeGlyph3D = nullptr;
+	}
+
+	if (nullptr != s_cubePolyData)
+	{
+		s_cubePolyData = nullptr;
+	}
+
+	if (nullptr != s_cubePolyDataMapper)
+	{
+		s_cubePolyDataMapper = nullptr;
+	}
+
+	if (nullptr != s_cubeActor)
+	{
+		s_cubeActor = nullptr;
 	}
 #pragma endregion
 
@@ -215,6 +308,7 @@ void HVisualDebugging::Update()
 	DrawLines();
 	DrawTriangle();
 	DrawSpheres();
+	DrawCubes();
 	DrawArrows();
 }
 
@@ -312,42 +406,63 @@ void HVisualDebugging::DrawTriangle()
 void HVisualDebugging::DrawSpheres()
 {
 	if (s_sphereInfosToDraw.empty()) return;
-	
-	vtkNew<vtkAppendPolyData> appendFilter;
-	appendFilter->AddInputData(s_spherePolyData);
-	vtkNew<vtkUnsignedCharArray> colors;
-	colors->SetNumberOfComponents(3);
 
-	for (auto& sphereInfo : s_sphereInfosToDraw)
+	auto points = s_spherePolyData->GetPoints();
+	auto pointData = s_spherePolyData->GetPointData();
+	vtkDoubleArray* scales = vtkDoubleArray::SafeDownCast(pointData->GetArray("Scales"));
+	vtkUnsignedCharArray* colors = vtkUnsignedCharArray::SafeDownCast(pointData->GetArray("Colors"));
+
+	for (auto& cubeInfo : s_sphereInfosToDraw)
 	{
-		auto center = std::get<0>(sphereInfo);
-		auto radius = std::get<1>(sphereInfo);
-		auto r = std::get<2>(sphereInfo);
-		auto g = std::get<3>(sphereInfo);
-		auto b = std::get<4>(sphereInfo);
+		auto center = std::get<0>(cubeInfo);
+		auto scale = std::get<1>(cubeInfo);
+		auto r = std::get<2>(cubeInfo);
+		auto g = std::get<3>(cubeInfo);
+		auto b = std::get<4>(cubeInfo);
 
-		vtkNew<vtkSphereSource> sphereSource;
-		sphereSource->SetCenter((double*)&center);
-		sphereSource->SetRadius(radius);
-		sphereSource->Update();
-	
-		appendFilter->AddInputConnection(sphereSource->GetOutputPort());
-
-		auto nop = sphereSource->GetOutput()->GetNumberOfPoints();
-		for (size_t i = 0; i < nop; i++)
-		{
-			unsigned char uc[3]{ r, g, b };
-			colors->InsertNextTypedTuple(uc);
-			colors->InsertNextTypedTuple(uc);
-			colors->InsertNextTypedTuple(uc);
-		}
-		sphereSource->GetOutput()->GetPointData()->SetScalars(colors);
+		points->InsertNextPoint(center.xyz());
+		scales->InsertNextValue(scale);
+		unsigned char uc[3]{ r, g, b };
+		colors->InsertNextTypedTuple(uc);
 	}
-	appendFilter->Update();
 
-	s_spherePolyData->ShallowCopy(appendFilter->GetOutput());
+	points->Modified();
+	s_sphereGlyph3D->Update();
+
+	s_renderWindow->Render();
 
 	s_sphereInfosToDraw.clear();
+}
+
+void HVisualDebugging::DrawCubes()
+{
+	if (s_cubeInfosToDraw.empty()) return;
+
+	auto points = s_cubePolyData->GetPoints();
+	auto pointData = s_cubePolyData->GetPointData();
+	vtkDoubleArray* scales = vtkDoubleArray::SafeDownCast(pointData->GetArray("Scales"));
+	vtkUnsignedCharArray* colors = vtkUnsignedCharArray::SafeDownCast(pointData->GetArray("Colors"));
+
+	for (auto& cubeInfo : s_cubeInfosToDraw)
+	{
+		auto center = std::get<0>(cubeInfo);
+		auto scale = std::get<1>(cubeInfo);
+		auto r = std::get<2>(cubeInfo);
+		auto g = std::get<3>(cubeInfo);
+		auto b = std::get<4>(cubeInfo);
+
+		points->InsertNextPoint(center.xyz());
+		scales->InsertNextValue(scale);
+		unsigned char uc[3]{ r, g, b };
+		colors->InsertNextTypedTuple(uc);
+	}
+
+	points->Modified();
+	s_cubeGlyph3D->Update();
+
+	s_renderWindow->Render();
+
+	s_cubeInfosToDraw.clear();
 }
 
 void HVisualDebugging::DrawArrows()
@@ -416,15 +531,26 @@ void HVisualDebugging::AddTriangle(const HVector3& p0, const HVector3& p1, const
 	s_triangleInfosToDraw.push_back(std::make_tuple(p0, p1, p2, r, g, b));
 }
 
-void HVisualDebugging::AddSphere(double* center, double radius, unsigned char r, unsigned char g, unsigned char b)
+void HVisualDebugging::AddSphere(double* center, double scale, unsigned char r, unsigned char g, unsigned char b)
 {
 	HVector3 c{ center[0], center[1], center[2] };
-	HVisualDebugging::AddSphere(c, radius, r, g, b);
+	HVisualDebugging::AddSphere(c, scale, r, g, b);
 }
 
-void HVisualDebugging::AddSphere(const HVector3& center, double radius, unsigned char r, unsigned char g, unsigned char b)
+void HVisualDebugging::AddSphere(const HVector3& center, double scale, unsigned char r, unsigned char g, unsigned char b)
 {
-	s_sphereInfosToDraw.push_back(std::make_tuple(center, radius, r, g, b));
+	s_sphereInfosToDraw.push_back(std::make_tuple(center, scale, r, g, b));
+}
+
+void HVisualDebugging::AddCube(double* center, double scale, unsigned char r, unsigned char g, unsigned char b)
+{
+	HVector3 c{ center[0], center[1], center[2] };
+	HVisualDebugging::AddCube(c, scale, r, g, b);
+}
+
+void HVisualDebugging::AddCube(const HVector3& center, double scale, unsigned char r, unsigned char g, unsigned char b)
+{
+	s_cubeInfosToDraw.push_back(std::make_tuple(center, scale, r, g, b));
 }
 
 void HVisualDebugging::AddArrow(double* center, unsigned char r, unsigned char g, unsigned char b)

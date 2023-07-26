@@ -15,8 +15,11 @@ public:
 	static void AddTriangle(double* p0, double* p1, double* p2, unsigned char r, unsigned char g, unsigned char b);
 	static void AddTriangle(const HVector3& p0, const HVector3& p1, const HVector3& p2, unsigned char r, unsigned char g, unsigned char b);
 
-	static void AddSphere(double* center, double radius, unsigned char r, unsigned char g, unsigned char b);
-	static void AddSphere(const HVector3& center, double radius, unsigned char r, unsigned char g, unsigned char b);
+	static void AddSphere(double* center, double scale, unsigned char r, unsigned char g, unsigned char b);
+	static void AddSphere(const HVector3& center, double scale, unsigned char r, unsigned char g, unsigned char b);
+
+	static void AddCube(double* center, double scale, unsigned char r, unsigned char g, unsigned char b);
+	static void AddCube(const HVector3& center, double scale, unsigned char r, unsigned char g, unsigned char b);
 
 	static void AddArrow(double* position, unsigned char r, unsigned char g, unsigned char b);
 	static void AddArrow(const HVector3& position, unsigned char r, unsigned char g, unsigned char b);
@@ -46,7 +49,13 @@ private:
 
 	static vtkSmartPointer<vtkActor> s_sphereActor;
 	static vtkSmartPointer<vtkPolyDataMapper> s_spherePolyDataMapper;
+	static vtkSmartPointer<vtkGlyph3D> s_sphereGlyph3D;
 	static vtkSmartPointer<vtkPolyData> s_spherePolyData;
+
+	static vtkSmartPointer<vtkActor> s_cubeActor;
+	static vtkSmartPointer<vtkPolyDataMapper> s_cubePolyDataMapper;
+	static vtkSmartPointer<vtkGlyph3D> s_cubeGlyph3D;
+	static vtkSmartPointer<vtkPolyData> s_cubePolyData;
 
 	static vtkSmartPointer<vtkActor> s_arrowActor;
 	static vtkSmartPointer<vtkPolyDataMapper> s_arrowPolyDataMapper;
@@ -55,6 +64,7 @@ private:
 	static void DrawLines();
 	static void DrawTriangle();
 	static void DrawSpheres();
+	static void DrawCubes();
 	static void DrawArrows();
 
 	static void ShowLines(bool bShow);
@@ -69,6 +79,7 @@ private:
 	static std::vector<std::tuple<HVector3, HVector3, unsigned char, unsigned char, unsigned char>> s_lineInfosToDraw;
 	static std::vector<std::tuple<HVector3, HVector3, HVector3, unsigned char, unsigned char, unsigned char>> s_triangleInfosToDraw;
 	static std::vector<std::tuple<HVector3, double, unsigned char, unsigned char, unsigned char>> s_sphereInfosToDraw;
+	static std::vector<std::tuple<HVector3, double, unsigned char, unsigned char, unsigned char>> s_cubeInfosToDraw;
 	static std::vector<std::tuple<HVector3, unsigned char, unsigned char, unsigned char>> s_arrowInfosToDraw;
 
 public:
