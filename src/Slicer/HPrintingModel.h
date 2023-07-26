@@ -28,6 +28,8 @@ public:
 
 	void Pick(double x, double y);
 
+	std::vector<vtkIdType> GetConnectedCellIds(vtkSmartPointer<vtkPolyData> modelData, vtkIdType cellId);
+
 	inline void ShowInitialModel(bool bShow) { ShowModel(initialModelActor, bShow); }
 	inline void ToggleInitialModelVisibility() { ToggleModelVisibility(initialModelActor); }
 	inline void ToggleInitialModelRepresentation() { ToggleModelRepresentation(initialModelActor); }

@@ -166,9 +166,10 @@ class HVolume : public HAABB
 public:
 	//HVolume(double voxelSize, const HVector3& minPoint, const HVector3& maxPoint);
 
-	HVolume(double voxelSize, vtkSmartPointer<vtkPolyData> initialModelData);
+	HVolume(double voxelSize, vtkSmartPointer<vtkPolyData> modelData);
+	//HVolume(double voxelSize, vtkSmartPointer<vtkPolyData> modelData, vtkSmartPointer<vtkCellArray> cells);
 
-	void Initialize(vtkSmartPointer<vtkPolyData> initialModelData);
+	void Initialize(vtkSmartPointer<vtkPolyData> modelData);
 
 	inline HVolumeIndex GetIndex(const HVector3& position)
 	{

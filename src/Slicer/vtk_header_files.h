@@ -3,6 +3,7 @@
 #include <vtkVersion.h>
 #include <vtkNew.h>
 #include <vtkFloatArray.h>
+#include <vtkDoubleArray.h>
 #include <vtkUnsignedCharArray.h>
 
 #include <vtkCommand.h>
@@ -50,6 +51,7 @@
 #include <vtkAxesActor.h>
 #include <vtkCaptionActor2D.h>
 #include <vtkTextProperty.h>
+#include <vtkGlyph3D.h>
 
 #include <vtkCellPicker.h>
 #include <vtkPropPicker.h>
@@ -60,13 +62,20 @@
 #include <vtkAnnotatedCubeActor.h>
 #include <vtkOrientationMarkerWidget.h>
 
+#include <vtkPolyDataAlgorithm.h>
+#include <vtkInformation.h>
+#include <vtkInformationVector.h>
+
+
 #include <vtkPolyDataConnectivityFilter.h>
 #include <vtkElevationFilter.h>
 #include <vtkAdaptiveSubdivisionFilter.h>
 #include <vtkLinearExtrusionFilter.h>
 #include <vtkContourFilter.h>
 #include <vtkCellLocator.h>
-#include <vtkGlyph3D.h>
+#include <vtkSignedDistance.h>
+
+#include <vtkExtractCells.h>
 
 #include <vtkSTLReader.h>
 #include <vtkOBJReader.h>

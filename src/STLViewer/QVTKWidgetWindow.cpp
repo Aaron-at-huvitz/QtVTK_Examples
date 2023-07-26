@@ -27,101 +27,88 @@ void QVTKWidgetWindow::InitializeVTK()
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->setRenderWindow(renderWindow);
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->AddRenderer(renderer);
 
+#pragma region Connectivity Filter
+    //vtkNew<vtkNamedColors> colors;
 
+//// Create some spheres
+//vtkNew<vtkSphereSource> sphereSource1;
+//sphereSource1->Update();
 
+//vtkNew<vtkSphereSource> sphereSource2;
+//sphereSource2->SetCenter(5, 0, 0);
+//sphereSource2->Update();
 
+//vtkNew<vtkSphereSource> sphereSource3;
+//sphereSource3->SetCenter(10, 0, 0);
+//sphereSource3->Update();
 
+//vtkNew<vtkAppendPolyData> appendFilter;
+//appendFilter->AddInputConnection(sphereSource1->GetOutputPort());
+//appendFilter->AddInputConnection(sphereSource2->GetOutputPort());
+//appendFilter->AddInputConnection(sphereSource3->GetOutputPort());
+//appendFilter->Update();
 
-    vtkNew<vtkNamedColors> colors;
+//vtkNew<vtkPolyDataConnectivityFilter> connectivityFilter;
+//connectivityFilter->SetInputConnection(appendFilter->GetOutputPort());
+//connectivityFilter->SetExtractionModeToAllRegions();
+//connectivityFilter->ColorRegionsOn();
+//connectivityFilter->Update();
 
-    // Create some spheres
-    vtkNew<vtkSphereSource> sphereSource1;
-    sphereSource1->Update();
+//// Visualize
+//vtkNew<vtkPolyDataMapper> mapper;
+//mapper->SetInputConnection(connectivityFilter->GetOutputPort());
+//mapper->SetScalarRange(connectivityFilter->GetOutput()
+//    ->GetPointData()
+//    ->GetArray("RegionId")
+//    ->GetRange());
+//mapper->Update();
 
-    vtkNew<vtkSphereSource> sphereSource2;
-    sphereSource2->SetCenter(5, 0, 0);
-    sphereSource2->Update();
+//vtkNew<vtkActor> actor;
+//actor->SetMapper(mapper);
 
-    vtkNew<vtkSphereSource> sphereSource3;
-    sphereSource3->SetCenter(10, 0, 0);
-    sphereSource3->Update();
+//renderer->AddActor(actor);
+#pragma endregion
 
-    vtkNew<vtkAppendPolyData> appendFilter;
-    appendFilter->AddInputConnection(sphereSource1->GetOutputPort());
-    appendFilter->AddInputConnection(sphereSource2->GetOutputPort());
-    appendFilter->AddInputConnection(sphereSource3->GetOutputPort());
-    appendFilter->Update();
+#pragma region Text
+   //vtkNew<vtkVectorText> textSource;
+   //textSource->SetText("Slicer");
 
-    vtkNew<vtkPolyDataConnectivityFilter> connectivityFilter;
-    connectivityFilter->SetInputConnection(appendFilter->GetOutputPort());
-    connectivityFilter->SetExtractionModeToAllRegions();
-    connectivityFilter->ColorRegionsOn();
-    connectivityFilter->Update();
+   //vtkNew<vtkLinearExtrusionFilter> extrudeFilter;
+   //extrudeFilter->SetInputConnection(textSource->GetOutputPort());
+   //extrudeFilter->SetExtrusionTypeToVectorExtrusion();
+   //extrudeFilter->SetVector(0, 0, 1);
+   //extrudeFilter->SetScaleFactor(0.5);
+   //extrudeFilter->CappingOn();
 
-    // Visualize
-    vtkNew<vtkPolyDataMapper> mapper;
-    mapper->SetInputConnection(connectivityFilter->GetOutputPort());
-    mapper->SetScalarRange(connectivityFilter->GetOutput()
-        ->GetPointData()
-        ->GetArray("RegionId")
-        ->GetRange());
-    mapper->Update();
+   ////vtkNew<vtkContourFilter> contourFilter;
+   ////contourFilter->SetInputData(extrudeFilter->GetOutput());
+   ////contourFilter->GenerateValues(1, 0.0, 0.0);
 
-    vtkNew<vtkActor> actor;
-    actor->SetMapper(mapper);
+   //vtkNew<vtkPolyDataMapper> textMapper;
+   //textMapper->SetInputConnection(textSource->GetOutputPort());
 
-    renderer->AddActor(actor);
+   //vtkNew<vtkPolyDataMapper> extrudeMapper;
+   //extrudeMapper->SetInputConnection(extrudeFilter->GetOutputPort());
 
+   ////vtkNew<vtkPolyDataMapper> contourMapper;
+   ////contourMapper->SetInputConnection(contourFilter->GetOutputPort());
 
+   //vtkNew<vtkActor> textActor;
+   //textActor->SetMapper(textMapper);
 
+   //vtkNew<vtkActor> extrudeActor;
+   //extrudeActor->SetMapper(extrudeMapper);
 
+   ////vtkNew<vtkActor> contourActor;
+   ////contourActor->SetMapper(contourMapper);
+   ////contourActor->GetProperty()->SetColor(1.0, 0.0, 0.0);
 
+   //renderer->AddActor(textActor);
+   //renderer->AddActor(extrudeActor);
+   ////renderer->AddActor(contourActor);
 
-
-
-
-
-
-
-
-    //vtkNew<vtkVectorText> textSource;
-    //textSource->SetText("Slicer");
-
-    //vtkNew<vtkLinearExtrusionFilter> extrudeFilter;
-    //extrudeFilter->SetInputConnection(textSource->GetOutputPort());
-    //extrudeFilter->SetExtrusionTypeToVectorExtrusion();
-    //extrudeFilter->SetVector(0, 0, 1);
-    //extrudeFilter->SetScaleFactor(0.5);
-    //extrudeFilter->CappingOn();
-
-    ////vtkNew<vtkContourFilter> contourFilter;
-    ////contourFilter->SetInputData(extrudeFilter->GetOutput());
-    ////contourFilter->GenerateValues(1, 0.0, 0.0);
-
-    //vtkNew<vtkPolyDataMapper> textMapper;
-    //textMapper->SetInputConnection(textSource->GetOutputPort());
-
-    //vtkNew<vtkPolyDataMapper> extrudeMapper;
-    //extrudeMapper->SetInputConnection(extrudeFilter->GetOutputPort());
-
-    ////vtkNew<vtkPolyDataMapper> contourMapper;
-    ////contourMapper->SetInputConnection(contourFilter->GetOutputPort());
-
-    //vtkNew<vtkActor> textActor;
-    //textActor->SetMapper(textMapper);
-
-    //vtkNew<vtkActor> extrudeActor;
-    //extrudeActor->SetMapper(extrudeMapper);
-
-    ////vtkNew<vtkActor> contourActor;
-    ////contourActor->SetMapper(contourMapper);
-    ////contourActor->GetProperty()->SetColor(1.0, 0.0, 0.0);
-
-    //renderer->AddActor(textActor);
-    //renderer->AddActor(extrudeActor);
-    ////renderer->AddActor(contourActor);
-
-    //renderer->ResetCamera();
+   //renderer->ResetCamera();  
+#pragma endregion
 }
 
 void QVTKWidgetWindow::InitializeMenuBar()
@@ -161,8 +148,40 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
     reader->SetFileName(fileName.toStdString().c_str());
     reader->Update();
 
+
+    vtkNew<vtkPolyDataNormals> polyDataNormals;
+    polyDataNormals->SetInputConnection(reader->GetOutputPort());
+    polyDataNormals->ComputePointNormalsOn();
+    polyDataNormals->Update();
+
+    double bounds[6];
+    polyDataNormals->GetOutput()->GetBounds(bounds);
+    double range[3];
+    for (int i = 0; i < 3; ++i)
+    {
+        range[i] = bounds[2 * i + 1] - bounds[2 * i];
+    }
+
+    int dimension = 512;
+    auto radius = range[0] / static_cast<double>(dimension) * 50; // ~5 voxels
+
+    vtkNew<vtkSignedDistance> signedDistance;
+    signedDistance->SetInputConnection(polyDataNormals->GetOutputPort());
+    signedDistance->SetRadius(radius);
+    signedDistance->SetDimensions(dimension, dimension, dimension);
+    signedDistance->SetBounds(bounds[0] - range[0] * 0.1, bounds[1] + range[0] * 0.1,
+    bounds[2] - range[1] * 0.1, bounds[3] + range[1] * 0.1,
+    bounds[4] - range[2] * 0.1, bounds[5] + range[2] * 0.1);
+
+    vtkNew<vtkExtractSurface> extractSurface;
+    extractSurface->SetInputConnection(signedDistance->GetOutputPort());
+    extractSurface->Update();
+
+
+
+
     vtkNew<vtkPolyDataMapper> mapper;
-    mapper->SetInputConnection(reader->GetOutputPort());
+    mapper->SetInputConnection(extractSurface->GetOutputPort());
 
     vtkNew<vtkActor> actor;
     actor->SetMapper(mapper);

@@ -181,6 +181,18 @@ void HPrintingModel::Voxelize(vtkSmartPointer<vtkPolyData> modelData, double vox
     auto resolutionY = volume->GetResolutionY();
     auto resolutionZ = volume->GetResolutionZ();
 
+    vtkNew<vtkDoubleArray> scales;
+    scales->SetNumberOfComponents(1);
+    scales->SetName("Scales");
+    //polyData->GetPointData()->SetScalars(scales);
+    polyData->GetPointData()->AddArray(scales);
+
+    vtkNew<vtkUnsignedCharArray> colors;
+    colors->SetName("Colors");
+    colors->SetNumberOfComponents(4);
+    //polyData->GetPointData()->SetScalars(colors);
+    polyData->GetPointData()->AddArray(colors);
+
     for (int z = 0; z < resolutionZ; z++)
     {
         for (int y = 0; y < resolutionY; y++)
@@ -192,6 +204,21 @@ void HPrintingModel::Voxelize(vtkSmartPointer<vtkPolyData> modelData, double vox
                 {
                     voxel.GetCenter();
                     points->InsertNextPoint((double*)&(voxel.GetCenter()));
+
+                    scales->InsertNextValue(1.0);
+
+                    unsigned char c[] = { 255, 0, 0, 255 };
+                    colors->InsertNextTypedTuple(c);
+                }
+                else
+                {
+                    voxel.GetCenter();
+                    points->InsertNextPoint((double*)&(voxel.GetCenter()));
+
+                    unsigned char c[] = { 0, 255, 255, 50 };
+                    colors->InsertNextTypedTuple(c);
+
+                    scales->InsertNextValue(0.1);
                 }
             }
         }
@@ -206,6 +233,39 @@ void HPrintingModel::Voxelize(vtkSmartPointer<vtkPolyData> modelData, double vox
     volumeModelData = vtkSmartPointer<vtkGlyph3D>::New();
     volumeModelData->SetSourceConnection(cubeSource->GetOutputPort());
     volumeModelData->SetInputData(polyData);
+    volumeModelData->SetScaleModeToScaleByScalar();
+    volumeModelData->SetColorModeToColorByScalar();
+    //https://vtk.org/doc/nightly/html/classvtkGlyph3D.html
+    /*
+    Warning
+    The scaling of the glyphs is controlled by the ScaleFactor ivar multiplied by the scalar
+    value at each point (if VTK_SCALE_BY_SCALAR is set), or multiplied by the vector magnitude
+    (if VTK_SCALE_BY_VECTOR is set), Alternatively (if VTK_SCALE_BY_VECTORCOMPONENTS is set),
+    the scaling may be specified for x,y,z using the vector components.
+    The scale factor can be further controlled by enabling clamping using the Clamping ivar.
+    If clamping is enabled, the scale is normalized by the Range ivar, and then multiplied
+    by the scale factor. The normalization process includes clamping the scale value between (0,1).
+    Typically this object operates on input data with scalar and/or vector data.
+    However, scalar and/or vector aren't necessary, and it can be used to copy data from
+     a single source to each point. In this case the scale factor can be used to uniformly
+     scale the glyphs.
+    The object uses "vector" data to scale glyphs, orient glyphs, and/or index into a table of glyphs.
+    You can choose to use either the vector or normal data at each input point.
+    Use the method SetVectorModeToUseVector() to use the vector input data, and SetVectorModeToUseNormal()
+    to use the normal input data.
+    If you do use a table of glyphs, make sure to set the Range ivar to make sure the index
+    into the glyph table is computed correctly.
+    You can turn off scaling of the glyphs completely by using the Scaling ivar.
+    You can also turn off scaling due to data (either vector or scalar)
+    by using the SetScaleModeToDataScalingOff() method.
+    You can set what arrays to use for the scalars, vectors, normals, and color scalars
+    by using the SetInputArrayToProcess methods in vtkAlgorithm. The first array is scalars,
+    the next vectors, the next normals and finally color scalars.
+    */
+
+    volumeModelData->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "Scales");
+    volumeModelData->SetInputArrayToProcess(3, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "Colors");
+    //volumeModelData->ScalingOff();
     volumeModelData->Update();
 
     volumeModelMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -214,7 +274,9 @@ void HPrintingModel::Voxelize(vtkSmartPointer<vtkPolyData> modelData, double vox
     volumeModelActor = vtkSmartPointer<vtkActor>::New();
     volumeModelActor->SetMapper(volumeModelMapper);
     volumeModelActor->GetProperty()->SetRepresentationToWireframe();
-    volumeModelActor->GetProperty()->SetColor(0.0, 0.5, 0.0);
+    //volumeModelActor->GetProperty()->SetColor(0.0, 0.5, 0.0);
+    volumeModelActor->GetProperty()->SetAmbient(1.0);
+    volumeModelActor->GetProperty()->SetDiffuse(0.0);
 
     renderer->AddActor(volumeModelActor);
 }
@@ -317,61 +379,165 @@ void HPrintingModel::AnalyzeOverhang()
     renderer->AddActor(overhangModelActor);
     initialModelActor->VisibilityOff();
 
+
+
+    for (size_t i = 0; i < overhangIntensity->GetNumberOfValues(); i++)
     {
-        overhangModelDataConnectivityFilter = vtkSmartPointer<vtkPolyDataConnectivityFilter>::New();
-        overhangModelDataConnectivityFilter->SetInputData(overhangModelData);
-        overhangModelDataConnectivityFilter->SetExtractionModeToAllRegions();
-        overhangModelDataConnectivityFilter->ColorRegionsOn();
-        overhangModelDataConnectivityFilter->Update();
-
-        int numberOfRegions = overhangModelDataConnectivityFilter->GetNumberOfExtractedRegions();
-        cout << "Number of extracted regions: " << numberOfRegions << endl;
-
-        vtkNew<vtkLookupTable> lut;
-        lut->SetNumberOfTableValues(std::max(numberOfRegions, 10));
-        lut->Build();
-
-        // Fill in a few known colors, the rest will be generated if needed
-        vtkNew<vtkNamedColors> colors;
-        lut->SetTableValue(0, colors->GetColor4d("Gold").GetData());
-        lut->SetTableValue(1, colors->GetColor4d("Banana").GetData());
-        lut->SetTableValue(2, colors->GetColor4d("Tomato").GetData());
-        lut->SetTableValue(3, colors->GetColor4d("Wheat").GetData());
-        lut->SetTableValue(4, colors->GetColor4d("Lavender").GetData());
-        lut->SetTableValue(5, colors->GetColor4d("Flesh").GetData());
-        lut->SetTableValue(6, colors->GetColor4d("Raspberry").GetData());
-        lut->SetTableValue(7, colors->GetColor4d("Salmon").GetData());
-        lut->SetTableValue(8, colors->GetColor4d("Mint").GetData());
-        lut->SetTableValue(9, colors->GetColor4d("Peacock").GetData());
-        
-        if (numberOfRegions > 9)
+        auto angle = overhangIntensity->GetValue(i);
+        if (angle < 5)
         {
-            std::mt19937 mt(4355412); // Standard mersenne_twister_engine
-            std::uniform_real_distribution<double> distribution(.4, 1.0);
-            for (auto i = 10; i < numberOfRegions; ++i)
-            {
-                lut->SetTableValue(i, distribution(mt), distribution(mt), distribution(mt), 1.0);
-            }
+            auto cell = overhangModelData->GetCell(i);
+            auto points = cell->GetPoints();
+            double p0[3], p1[3], p2[3];
+            points->GetPoint(0, p0);
+            points->GetPoint(1, p1);
+            points->GetPoint(2, p2);
+
+            auto center = TriangleCentroid(p0, p1, p2);
+            HVisualDebugging::AddSphere(center, 0.1, 255, 0, 0);
         }
+        else if (angle < 15)
+        {
+            auto cell = overhangModelData->GetCell(i);
+            auto points = cell->GetPoints();
+            double p0[3], p1[3], p2[3];
+            points->GetPoint(0, p0);
+            points->GetPoint(1, p1);
+            points->GetPoint(2, p2);
 
-        // Visualize
-        vtkNew<vtkPolyDataMapper> mapper;
-        mapper->SetInputConnection(overhangModelDataConnectivityFilter->GetOutputPort());
-        /*mapper->SetScalarRange(connectivityFilter->GetOutput()
-            ->GetPointData()
-            ->GetArray("RegionId")
-            ->GetRange());*/
-        mapper->SetScalarRange(0, numberOfRegions - 1);
-        mapper->SetLookupTable(lut);
-        mapper->Update();
+            auto center = TriangleCentroid(p0, p1, p2);
+            HVisualDebugging::AddSphere(center, 0.07, 255, 0, 255);
+        }
+        else if (angle < 30)
+        {
+            auto cell = overhangModelData->GetCell(i);
+            auto points = cell->GetPoints();
+            double p0[3], p1[3], p2[3];
+            points->GetPoint(0, p0);
+            points->GetPoint(1, p1);
+            points->GetPoint(2, p2);
 
-        //double bounds[6];
-        //overhangModelActor->GetBounds(bounds);
-        vtkNew<vtkActor> actor;
-        actor->SetMapper(mapper);
-        //actor->SetPosition(0, 0, -(bounds[5] - bounds[4]) * 2);
-        //renderer->AddActor(actor);
+            auto center = TriangleCentroid(p0, p1, p2);
+            HVisualDebugging::AddSphere(center, 0.05, 255, 255, 0);
+        }
+        else if (angle < 45)
+        {
+            auto cell = overhangModelData->GetCell(i);
+            auto points = cell->GetPoints();
+            double p0[3], p1[3], p2[3];
+            points->GetPoint(0, p0);
+            points->GetPoint(1, p1);
+            points->GetPoint(2, p2);
+
+            auto center = TriangleCentroid(p0, p1, p2);
+            HVisualDebugging::AddSphere(center, 0.03, 0, 255, 0);
+        }
     }
+
+    
+
+    //{
+    //    overhangModelDataConnectivityFilter = vtkSmartPointer<vtkPolyDataConnectivityFilter>::New();
+    //    overhangModelDataConnectivityFilter->SetInputData(overhangModelData);
+    //    overhangModelDataConnectivityFilter->SetExtractionModeToAllRegions();
+    //    overhangModelDataConnectivityFilter->ColorRegionsOn();
+    //    overhangModelDataConnectivityFilter->Update();
+
+    //    int numberOfRegions = overhangModelDataConnectivityFilter->GetNumberOfExtractedRegions();
+    //    cout << "Number of extracted regions: " << numberOfRegions << endl;
+
+    //    vtkNew<vtkLookupTable> lut;
+    //    lut->SetNumberOfTableValues(std::max(numberOfRegions, 10));
+    //    lut->Build();
+
+    //    // Fill in a few known colors, the rest will be generated if needed
+    //    vtkNew<vtkNamedColors> colors;
+    //    lut->SetTableValue(0, colors->GetColor4d("Gold").GetData());
+    //    lut->SetTableValue(1, colors->GetColor4d("Banana").GetData());
+    //    lut->SetTableValue(2, colors->GetColor4d("Tomato").GetData());
+    //    lut->SetTableValue(3, colors->GetColor4d("Wheat").GetData());
+    //    lut->SetTableValue(4, colors->GetColor4d("Lavender").GetData());
+    //    lut->SetTableValue(5, colors->GetColor4d("Flesh").GetData());
+    //    lut->SetTableValue(6, colors->GetColor4d("Raspberry").GetData());
+    //    lut->SetTableValue(7, colors->GetColor4d("Salmon").GetData());
+    //    lut->SetTableValue(8, colors->GetColor4d("Mint").GetData());
+    //    lut->SetTableValue(9, colors->GetColor4d("Peacock").GetData());
+
+    //    if (numberOfRegions > 9)
+    //    {
+    //        std::mt19937 mt(4355412); // Standard mersenne_twister_engine
+    //        std::uniform_real_distribution<double> distribution(.4, 1.0);
+    //        for (auto i = 10; i < numberOfRegions; ++i)
+    //        {
+    //            lut->SetTableValue(i, distribution(mt), distribution(mt), distribution(mt), 1.0);
+    //        }
+    //    }
+
+    //    // Visualize
+    //    vtkNew<vtkPolyDataMapper> mapper;
+    //    mapper->SetInputConnection(overhangModelDataConnectivityFilter->GetOutputPort());
+    //    /*mapper->SetScalarRange(connectivityFilter->GetOutput()
+    //        ->GetPointData()
+    //        ->GetArray("RegionId")
+    //        ->GetRange());*/
+    //    mapper->SetScalarRange(0, numberOfRegions - 1);
+    //    mapper->SetLookupTable(lut);
+    //    mapper->Update();
+
+    //    //double bounds[6];
+    //    //overhangModelActor->GetBounds(bounds);
+    //    vtkNew<vtkActor> actor;
+    //    actor->SetMapper(mapper);
+    //    //actor->SetPosition(0, 0, -(bounds[5] - bounds[4]) * 2);
+    //    //renderer->AddActor(actor);
+    //}
+
+    //{
+    //    auto tempPoly = overhangModelDataConnectivityFilter->GetOutput();
+    //    //auto cellData = tempPoly->GetCellData();
+    //    //cout << "cellData : " << cellData << endl;
+    //    //cout << "numberOfValues : " << cellData->GetScalars()->GetNumberOfValues() << endl;
+    //    //// Angle info of cells
+    //    ////for (size_t i = 0; i < cellData->GetScalars()->GetNumberOfValues(); i++)
+    //    ////{
+    //    ////    cout << cellData->GetScalars()->GetVariantValue(i).ToDouble() << endl;
+    //    ////}
+
+    //    std::map<int, std::vector<int>> pointIdRegionIdMapping;
+    //    auto pointData = tempPoly->GetPointData();
+    //    cout << "pointData : " << pointData << endl;
+    //    cout << "numberOfValues : " << pointData->GetScalars()->GetNumberOfValues() << endl;
+    //    // Region index of points
+    //    for (size_t i = 0; i < pointData->GetScalars()->GetNumberOfValues(); i++)
+    //    {
+    //        pointIdRegionIdMapping[pointData->GetScalars()->GetVariantValue(i).ToInt()].push_back(i);
+    //        //cout << pointData->GetScalars()->GetVariantValue(i).ToInt() << endl;
+    //    }
+
+    //    vtkNew<vtkPolyDataConnectivityFilter> tempCon;
+    //    tempCon->SetInputData(tempPoly);
+
+    //    tempCon->SetExtractionModeToPointSeededRegions();
+    //    //tempCon->AddSeed(10000);
+    //    tempCon->AddSeed(pointIdRegionIdMapping[0][0]);
+    //    tempCon->Update();
+
+    //    vtkNew<vtkPolyDataMapper> tempMapper;
+    //    tempMapper->SetInputConnection(tempCon->GetOutputPort());
+    //    tempMapper->ScalarVisibilityOff();
+    //    //tempMapper->SetScalarModeToDefault();
+    //    //tempMapper->UseLookupTableScalarRangeOff();
+    //    
+    //    vtkNew<vtkActor> tempActor;
+    //    tempActor->SetMapper(tempMapper);
+    //    double color[3] = { 0.0, 1.0, 0.0 };
+    //    //vtkNew<vtkNamedColors> colors;
+    //    //colors->GetColor("Lime", color);
+
+    //    tempActor->GetProperty()->SetColor(color[0], color[1], color[2]);
+
+    //    renderer->AddActor(tempActor);
+    //}
 
     //auto bounds = initialModelData->GetBounds();
     //auto xLen = bounds[1] - bounds[0];
@@ -578,60 +744,76 @@ void HPrintingModel::Pick(double x, double y)
     {
         auto pickPosition = picker->GetPickPosition();
         auto cellId = picker->GetCellId();
-        auto subId = picker->GetSubId();
 
-        cout << "cellId: " << cellId << " subId: " << subId << endl;
-        cout << "pickPosition: " << pickPosition[0] << ", " << pickPosition[1] << ", " << pickPosition[2] << endl;
 
-        HVisualDebugging::AddSphere(pickPosition, 0.25, 255, 0, 0);
-        HVisualDebugging::AddLine(renderer->GetActiveCamera()->GetPosition(), pickPosition, 0, 0, 255);
 
-        std::set<vtkIdType> visited;
-        auto currentCellId = cellId;
-        std::stack<vtkIdType> nextCellIds;
-        nextCellIds.push(cellId);
-        while (nextCellIds.size() != 0)
-        {
-            currentCellId = nextCellIds.top();
-            nextCellIds.pop();
+        //auto subId = picker->GetSubId();
 
-            visited.insert(currentCellId);
+        //cout << "cellId: " << cellId << " subId: " << subId << endl;
+        //cout << "pickPosition: " << pickPosition[0] << ", " << pickPosition[1] << ", " << pickPosition[2] << endl;
 
-            std::list<vtkIdType> neighbors;
-            GetNeighborCellIds(overhangModelData, currentCellId, neighbors);
+        //HVisualDebugging::AddSphere(pickPosition, 0.25, 255, 0, 0);
+        //HVisualDebugging::AddLine(renderer->GetActiveCamera()->GetPosition(), pickPosition, 0, 0, 255);
 
-            for (auto& n : neighbors)
-            {
-                if (visited.count(n) == 0)
-                {
-                    nextCellIds.push(n);
-                }
-            }
-        }
+        //std::set<vtkIdType> visited;
+        //auto currentCellId = cellId;
+        //std::stack<vtkIdType> nextCellIds;
+        //nextCellIds.push(cellId);
+        //while (nextCellIds.size() != 0)
+        //{
+        //    currentCellId = nextCellIds.top();
+        //    nextCellIds.pop();
 
-        auto totalArea = 0.0;
+        //    visited.insert(currentCellId);
 
-        for (auto& selectedCellId : visited)
-        {
-            auto scell = overhangModelData->GetCell(selectedCellId);
-            auto points = scell->GetPoints();
-            double p0[3], p1[3], p2[3];
-            points->GetPoint(0, p0);
-            points->GetPoint(1, p1);
-            points->GetPoint(2, p2);
+        //    std::list<vtkIdType> neighbors;
+        //    GetNeighborCellIds(overhangModelData, currentCellId, neighbors);
 
-            HVisualDebugging::AddTriangle(p0, p1, p2, 255, 0, 0);
+        //    for (auto& n : neighbors)
+        //    {
+        //        if (visited.count(n) == 0)
+        //        {
+        //            nextCellIds.push(n);
+        //        }
+        //    }
+        //}
 
-            auto area = TrianglArea(p0, p1, p2);
-            totalArea += area;
+        //auto totalArea = 0.0;
 
-            //HVisualDebugging::AddLine(p0, p1, 255, 0, 0);
-            //HVisualDebugging::AddLine(p1, p2, 255, 0, 0);
-            //HVisualDebugging::AddLine(p2, p0, 255, 0, 0);
-        }
+        //for (auto& selectedCellId : visited)
+        //{
+        //    auto scell = overhangModelData->GetCell(selectedCellId);
+        //    auto points = scell->GetPoints();
+        //    double p0[3], p1[3], p2[3];
+        //    points->GetPoint(0, p0);
+        //    points->GetPoint(1, p1);
+        //    points->GetPoint(2, p2);
 
-        cout << "Total AREA : " << totalArea << endl;
+        //    HVisualDebugging::AddTriangle(p0, p1, p2, 255, 0, 0);
+
+        //    auto area = TrianglArea(p0, p1, p2);
+        //    totalArea += area;
+
+        //    //HVisualDebugging::AddLine(p0, p1, 255, 0, 0);
+        //    //HVisualDebugging::AddLine(p1, p2, 255, 0, 0);
+        //    //HVisualDebugging::AddLine(p2, p0, 255, 0, 0);
+        //}
+
+        //cout << "Total AREA : " << totalArea << endl;
     }
+}
+
+std::vector<vtkIdType> HPrintingModel::GetConnectedCellIds(vtkSmartPointer<vtkPolyData> modelData, vtkIdType cellId)
+{
+    std::vector<vtkIdType> output;
+
+    vtkNew<vtkPolyDataConnectivityFilter> filter;
+    filter->SetInputData(modelData);
+    filter->SetExtractionModeToCellSeededRegions();
+    filter->AddSeed(cellId);
+    filter->Update();
+
+    return output;
 }
 
 void HPrintingModel::ShowModel(vtkSmartPointer<vtkActor> actor, bool bShow)

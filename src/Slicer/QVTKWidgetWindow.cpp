@@ -371,13 +371,13 @@ void QVTKWidgetWindow::LoadModel(const QString& fileName)
 
     HVisualDebugging::Initialize(renderer);
     
-    HVector3 pO{ 0.0, 0.0, 0.0 };
-    HVector3 pX{ (bounds[1] - bounds[0]) * 2, 0.0, 0.0};
-    HVector3 pY{ 0.0, (bounds[3] - bounds[2]) * 2, 0.0 };
-    HVector3 pZ{ 0.0, 0.0, (bounds[5] - bounds[4]) * 2 };
-    HVisualDebugging::AddLine((double*)&pO, (double*)&pX, 255, 0, 0);
-    HVisualDebugging::AddLine((double*)&pO, (double*)&pY, 0, 255, 0);
-    HVisualDebugging::AddLine((double*)&pO, (double*)&pZ, 0, 0, 255);
+    //HVector3 pO{ 0.0, 0.0, 0.0 };
+    //HVector3 pX{ (bounds[1] - bounds[0]) * 2, 0.0, 0.0};
+    //HVector3 pY{ 0.0, (bounds[3] - bounds[2]) * 2, 0.0 };
+    //HVector3 pZ{ 0.0, 0.0, (bounds[5] - bounds[4]) * 2 };
+    //HVisualDebugging::AddLine((double*)&pO, (double*)&pX, 255, 0, 0);
+    //HVisualDebugging::AddLine((double*)&pO, (double*)&pY, 0, 255, 0);
+    //HVisualDebugging::AddLine((double*)&pO, (double*)&pZ, 0, 0, 255);
 
     vtkNew<vtkAxesActor> axes;
     //axes->SetShaftTypeToLine();
