@@ -28,17 +28,17 @@ public:
 
 	void Pick(double x, double y);
 
-	inline void ShowInitialModel(bool bShow) { ShowModel(initialModelActor, bShow); }
-	inline void ToggleInitialModelVisibility() { ToggleModelVisibility(initialModelActor); }
-	inline void ToggleInitialModelRepresentation() { ToggleModelRepresentation(initialModelActor); }
+	inline void ShowInitialModel(bool bShow) { ShowActor(renderer, initialModelActor, bShow); }
+	inline void ToggleInitialModelVisibility() { ToggleActorVisibility(renderer, initialModelActor); }
+	inline void ToggleInitialModelRepresentation() { ToggleActorRepresentation(renderer, initialModelActor); }
 	
-	inline void ShowVolumeModel(bool bShow) { ShowModel(volumeModelActor, bShow); }
-	inline void ToggleVolumeModelVisibility() { ToggleModelVisibility(volumeModelActor); }
-	inline void ToggleVolumeModelRepresentation() { ToggleModelRepresentation(volumeModelActor); }
+	inline void ShowVolumeModel(bool bShow) { ShowActor(renderer, volumeModelActor, bShow); }
+	inline void ToggleVolumeModelVisibility() { ToggleActorVisibility(renderer, volumeModelActor); }
+	inline void ToggleVolumeModelRepresentation() { ToggleActorRepresentation(renderer, volumeModelActor); }
 	
-	inline void ShowOverhangModel(bool bShow) { ShowModel(overhangModelActor, bShow); }
-	inline void ToggleOverhangModelVisibility() { ToggleModelVisibility(overhangModelActor); }
-	inline void ToggleOverhangModelRepresentation() { ToggleModelRepresentation(overhangModelActor); }
+	inline void ShowOverhangModel(bool bShow) { ShowActor(renderer, overhangModelActor, bShow); }
+	inline void ToggleOverhangModelVisibility() { ToggleActorVisibility(renderer, overhangModelActor); }
+	inline void ToggleOverhangModelRepresentation() { ToggleActorRepresentation(renderer, overhangModelActor); }
 
 	inline vtkSmartPointer<vtkPolyData> GetInitialModelData() const { return initialModelData; }
 	inline vtkSmartPointer<vtkPolyDataMapper> GetInitialModelMapper() const { return initialModelMapper; }
@@ -77,8 +77,4 @@ protected:
 	vtkSmartPointer<vtkActor> volumeModelActor = nullptr;
 
 	HVolume* volume = nullptr;
-
-	void ShowModel(vtkSmartPointer<vtkActor> actor, bool bShow);
-	void ToggleModelVisibility(vtkSmartPointer<vtkActor> actor);
-	void ToggleModelRepresentation(vtkSmartPointer<vtkActor> actor);
 };

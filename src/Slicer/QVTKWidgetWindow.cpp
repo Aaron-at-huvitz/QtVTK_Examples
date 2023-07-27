@@ -395,10 +395,14 @@ void QVTKWidgetWindow::keyReleaseEvent(QKeyEvent* event)
     //if (event->key() == Qt::Key_QuoteLeft)
     if (event->key() == Qt::Key_Escape)
     {
-        HVisualDebugging::ToggleLines();
-        HVisualDebugging::ToggleTriangles();
-        HVisualDebugging::ToggleSpheres();
-        HVisualDebugging::ToggleCubes();
+        if (event->modifiers() == Qt::KeyboardModifier::ShiftModifier)
+        {
+            HVisualDebugging::ToggleAllRepresentation();
+        }
+        else
+        {
+            HVisualDebugging::ToggleAll();
+        }
     }
     else if (event->key() == Qt::Key_F1)
     {

@@ -67,16 +67,26 @@ private:
 	static void DrawCubes();
 	static void DrawArrows();
 
+	static void ShowAll(bool show);
+	static void ToggleAll();
+	static void ToggleAllRepresentation();
 	static void ShowLines(bool bShow);
 	static void ToggleLines();
+	static void ToggleLinesRepresentation();
 	static void ShowTriangles(bool bShow);
 	static void ToggleTriangles();
+	static void ToggleTrianglesRepresentation();
 	static void ShowSpheres(bool bShow);
 	static void ToggleSpheres();
+	static void ToggleSpheresRepresentation();
 	static void ShowCubes(bool bShow);
 	static void ToggleCubes();
+	static void ToggleCubesRepresentation();
 	static void ShowArrows(bool bShow);
 	static void ToggleArrows();
+	static void ToggleArrowsRepresentation();
+
+
 
 	static std::vector<std::tuple<HVector3, HVector3, unsigned char, unsigned char, unsigned char>> s_lineInfosToDraw;
 	static std::vector<std::tuple<HVector3, HVector3, HVector3, unsigned char, unsigned char, unsigned char>> s_triangleInfosToDraw;

@@ -564,12 +564,38 @@ void HVisualDebugging::AddArrow(const HVector3& center, unsigned char r, unsigne
 	s_arrowInfosToDraw.push_back(std::make_tuple(center, r, g, b));
 }
 
-void HVisualDebugging::ShowLines(bool bShow)
+void HVisualDebugging::ShowAll(bool show)
+{
+	ShowLines(show);
+	ShowTriangles(show);
+	ShowSpheres(show);
+	ShowCubes(show);
+	ShowArrows(show);
+}
+
+void HVisualDebugging::ToggleAll()
+{
+	ToggleLines();
+	ToggleTriangles();
+	ToggleSpheres();
+	ToggleCubes();
+	ToggleArrows();
+}
+
+void HVisualDebugging::ToggleAllRepresentation()
+{
+	ToggleLinesRepresentation();
+	ToggleTrianglesRepresentation();
+	ToggleSpheresRepresentation();
+	ToggleCubesRepresentation();
+	ToggleArrowsRepresentation();
+}
+
+void HVisualDebugging::ShowLines(bool show)
 {
 	if (nullptr != s_lineActor)
 	{
-		s_lineActor->SetVisibility(bShow);
-		s_renderer->GetRenderWindow()->Render();
+		ShowActor(s_renderer, s_lineActor, show);
 	}
 }
 
@@ -577,17 +603,23 @@ void HVisualDebugging::ToggleLines()
 {
 	if (nullptr != s_lineActor)
 	{
-		s_lineActor->SetVisibility(!s_lineActor->GetVisibility());
-		s_renderer->GetRenderWindow()->Render();
+		ToggleActorVisibility(s_renderer, s_lineActor);
 	}
 }
 
-void HVisualDebugging::ShowTriangles(bool bShow)
+void HVisualDebugging::ToggleLinesRepresentation()
+{
+	if (nullptr != s_lineActor)
+	{
+		ToggleActorRepresentation(s_renderer, s_lineActor);
+	}
+}
+
+void HVisualDebugging::ShowTriangles(bool show)
 {
 	if (nullptr != s_triangleActor)
 	{
-		s_triangleActor->SetVisibility(bShow);
-		s_renderer->GetRenderWindow()->Render();
+		ShowActor(s_renderer, s_triangleActor, show);
 	}
 }
 
@@ -595,17 +627,23 @@ void HVisualDebugging::ToggleTriangles()
 {
 	if (nullptr != s_triangleActor)
 	{
-		s_triangleActor->SetVisibility(!s_triangleActor->GetVisibility());
-		s_renderer->GetRenderWindow()->Render();
+		ToggleActorVisibility(s_renderer, s_triangleActor);
 	}
 }
 
-void HVisualDebugging::ShowSpheres(bool bShow)
+void HVisualDebugging::ToggleTrianglesRepresentation()
+{
+	if (nullptr != s_triangleActor)
+	{
+		ToggleActorRepresentation(s_renderer, s_triangleActor);
+	}
+}
+
+void HVisualDebugging::ShowSpheres(bool show)
 {
 	if (nullptr != s_sphereActor)
 	{
-		s_sphereActor->SetVisibility(bShow);
-		s_renderer->GetRenderWindow()->Render();
+		ShowActor(s_renderer, s_sphereActor, show);
 	}
 }
 
@@ -613,17 +651,23 @@ void HVisualDebugging::ToggleSpheres()
 {
 	if (nullptr != s_sphereActor)
 	{
-		s_sphereActor->SetVisibility(!s_sphereActor->GetVisibility());
-		s_renderer->GetRenderWindow()->Render();
+		ToggleActorVisibility(s_renderer, s_sphereActor);
 	}
 }
 
-void HVisualDebugging::ShowCubes(bool bShow)
+void HVisualDebugging::ToggleSpheresRepresentation()
+{
+	if (nullptr != s_sphereActor)
+	{
+		ToggleActorRepresentation(s_renderer, s_sphereActor);
+	}
+}
+
+void HVisualDebugging::ShowCubes(bool show)
 {
 	if (nullptr != s_cubeActor)
 	{
-		s_cubeActor->SetVisibility(bShow);
-		s_renderer->GetRenderWindow()->Render();
+		ShowActor(s_renderer, s_cubeActor, show);
 	}
 }
 
@@ -631,17 +675,23 @@ void HVisualDebugging::ToggleCubes()
 {
 	if (nullptr != s_cubeActor)
 	{
-		s_cubeActor->SetVisibility(!s_cubeActor->GetVisibility());
-		s_renderer->GetRenderWindow()->Render();
+		ToggleActorVisibility(s_renderer, s_cubeActor);
 	}
 }
 
-void HVisualDebugging::ShowArrows(bool bShow)
+void HVisualDebugging::ToggleCubesRepresentation()
+{
+	if (nullptr != s_cubeActor)
+	{
+		ToggleActorRepresentation(s_renderer, s_cubeActor);
+	}
+}
+
+void HVisualDebugging::ShowArrows(bool show)
 {
 	if (nullptr != s_arrowActor)
 	{
-		s_arrowActor->SetVisibility(bShow);
-		s_renderer->GetRenderWindow()->Render();
+		ShowActor(s_renderer, s_arrowActor, show);
 	}
 }
 
@@ -649,7 +699,14 @@ void HVisualDebugging::ToggleArrows()
 {
 	if (nullptr != s_arrowActor)
 	{
-		s_arrowActor->SetVisibility(!s_arrowActor->GetVisibility());
-		s_renderer->GetRenderWindow()->Render();
+		ToggleActorVisibility(s_renderer, s_arrowActor);
+	}
+}
+
+void HVisualDebugging::ToggleArrowsRepresentation()
+{
+	if (nullptr != s_arrowActor)
+	{
+		ToggleActorRepresentation(s_renderer, s_arrowActor);
 	}
 }

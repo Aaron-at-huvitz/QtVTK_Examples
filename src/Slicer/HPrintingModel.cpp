@@ -715,36 +715,3 @@ void HPrintingModel::Pick(double x, double y)
         cout << "Total AREA : " << totalArea << endl;*/
     }
 }
-
-void HPrintingModel::ShowModel(vtkSmartPointer<vtkActor> actor, bool bShow)
-{
-    if (nullptr != actor)
-    {
-        actor->SetVisibility(bShow);
-        renderer->GetRenderWindow()->Render();
-    }
-}
-
-void HPrintingModel::ToggleModelVisibility(vtkSmartPointer<vtkActor> actor)
-{
-    if (nullptr != actor)
-    {
-        actor->SetVisibility(!actor->GetVisibility());
-        renderer->GetRenderWindow()->Render();
-    }
-}
-
-void HPrintingModel::ToggleModelRepresentation(vtkSmartPointer<vtkActor> actor)
-{
-    if (nullptr != actor)
-    {
-        auto mode = actor->GetProperty()->GetRepresentation();
-        mode += 1;
-        if (mode > VTK_SURFACE)
-        {
-            mode = VTK_POINTS;
-        }
-        actor->GetProperty()->SetRepresentation(mode);
-        renderer->GetRenderWindow()->Render();
-    }
-}

@@ -265,6 +265,39 @@ inline HVector3 TriangleCentroid(const HVector3& p0, const HVector3& p1, const H
 	return (p0 + p1 + p2) / 3;
 }
 
+inline void ShowActor(vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> actor, bool bShow)
+{
+	if (nullptr != actor)
+	{
+		actor->SetVisibility(bShow);
+		renderer->GetRenderWindow()->Render();
+	}
+}
+
+inline void ToggleActorVisibility(vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> actor)
+{
+	if (nullptr != actor)
+	{
+		actor->SetVisibility(!actor->GetVisibility());
+		renderer->GetRenderWindow()->Render();
+	}
+}
+
+inline void ToggleActorRepresentation(vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> actor)
+{
+	if (nullptr != actor)
+	{
+		auto mode = actor->GetProperty()->GetRepresentation();
+		mode += 1;
+		if (mode > VTK_SURFACE)
+		{
+			mode = VTK_POINTS;
+		}
+		actor->GetProperty()->SetRepresentation(mode);
+		renderer->GetRenderWindow()->Render();
+	}
+}
+
 void GetCellPoints(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId, HVector3& p0, HVector3& p1, HVector3& p2);
 HVector3 GetCellCenter(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId);
 
