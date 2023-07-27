@@ -615,11 +615,11 @@ void HPrintingModel::Pick(double x, double y)
     vtkNew<vtkCellPicker> picker;
 
     picker->PickFromListOn();
-    //picker->AddPickList(initialModelActor);
-    if (nullptr != overhangModelActor)
-    {
-        picker->AddPickList(overhangModelActor);
-    }
+    picker->AddPickList(initialModelActor);
+    //if (nullptr != overhangModelActor)
+    //{
+    //    picker->AddPickList(overhangModelActor);
+    //}
     picker->SetTolerance(0.0005);
 
     picker->Pick(x, y, 0, renderer);
@@ -628,51 +628,69 @@ void HPrintingModel::Pick(double x, double y)
     {
         auto pickPosition = picker->GetPickPosition();
         auto cellId = picker->GetCellId();
+        auto cellCenter = GetCellCenter(initialModelData, cellId);
+        std::set<vtkIdType> connectedCellIds;
+        GetConnectedCellIdsFromCellWithInDistance(initialModelData, cellId, 2.0, connectedCellIds);
 
-        std::vector<std::set<vtkIdType>> group;
-        std::vector<int> cellGroupIds;
-        std::vector<double> groupAreas;
-        GetConnectedCellIds(overhangModelData, group, cellGroupIds, groupAreas);
-
-        std::vector<HColor3UC> colors;
-        //colors.push_back(HColor3UC(127, 0, 0));
-        //colors.push_back(HColor3UC(0, 127, 0));
-        //colors.push_back(HColor3UC(0, 0, 127));
-        //colors.push_back(HColor3UC(0, 127, 127));
-        //colors.push_back(HColor3UC(127, 0, 127));
-        //colors.push_back(HColor3UC(127, 127, 0));
-        //colors.push_back(HColor3UC(127, 127, 127));
-        colors.push_back(HColor3UC(255, 0, 0));
-        colors.push_back(HColor3UC(0, 255, 0));
-        colors.push_back(HColor3UC(0, 0, 255));
-        colors.push_back(HColor3UC(0, 255, 255));
-        colors.push_back(HColor3UC(255, 0, 255));
-        colors.push_back(HColor3UC(255, 255, 0));
-        colors.push_back(HColor3UC(255, 255, 255));
-
-        int colorIndex = 0;
-        for (auto& g : group)
+        for (auto& cid : connectedCellIds)
         {
-            auto color = colors[colorIndex];
-            for (auto& cid : g)
-            {
-                auto cell = overhangModelData->GetCell(cid);
-
-                auto points = cell->GetPoints();
-                double p0[3], p1[3], p2[3];
-                points->GetPoint(0, p0);
-                points->GetPoint(1, p1);
-                points->GetPoint(2, p2);
-
-                HVisualDebugging::AddTriangle(p0, p1, p2, color.r, color.g, color.b);
-            }
-
-            colorIndex++;
-            if (colorIndex > colors.size() - 1)
-            {
-                colorIndex = 0;
-            }
+            //auto center = GetCellCenter(initialModelData, cid);
+            HVector3 p0, p1, p2;
+            GetCellPoints(initialModelData, cid, p0, p1, p2);
+            HVisualDebugging::AddTriangle(p0, p1, p2, 255, 0, 0);
         }
+
+        HVisualDebugging::AddSphere(cellCenter, 2.0, 0, 0, 255);
+
+        renderer->GetRenderWindow()->Render();
+
+#pragma region Coloring Cells
+        //std::vector<std::set<vtkIdType>> group;
+        //std::vector<int> cellGroupIds;
+        //std::vector<double> groupAreas;
+        //GetConnectedCellIds(overhangModelData, group, cellGroupIds, groupAreas);
+
+        //std::vector<HColor3UC> colors;
+        ////colors.push_back(HColor3UC(127, 0, 0));
+        ////colors.push_back(HColor3UC(0, 127, 0));
+        ////colors.push_back(HColor3UC(0, 0, 127));
+        ////colors.push_back(HColor3UC(0, 127, 127));
+        ////colors.push_back(HColor3UC(127, 0, 127));
+        ////colors.push_back(HColor3UC(127, 127, 0));
+        ////colors.push_back(HColor3UC(127, 127, 127));
+        //colors.push_back(HColor3UC(255, 0, 0));
+        //colors.push_back(HColor3UC(0, 255, 0));
+        //colors.push_back(HColor3UC(0, 0, 255));
+        //colors.push_back(HColor3UC(0, 255, 255));
+        //colors.push_back(HColor3UC(255, 0, 255));
+        //colors.push_back(HColor3UC(255, 255, 0));
+        //colors.push_back(HColor3UC(255, 255, 255));
+
+        //int colorIndex = 0;
+        //for (auto& g : group)
+        //{
+        //    auto color = colors[colorIndex];
+        //    for (auto& cid : g)
+        //    {
+        //        auto cell = overhangModelData->GetCell(cid);
+
+        //        auto points = cell->GetPoints();
+        //        double p0[3], p1[3], p2[3];
+        //        points->GetPoint(0, p0);
+        //        points->GetPoint(1, p1);
+        //        points->GetPoint(2, p2);
+
+        //        HVisualDebugging::AddTriangle(p0, p1, p2, color.r, color.g, color.b);
+        //    }
+
+        //    colorIndex++;
+        //    if (colorIndex > colors.size() - 1)
+        //    {
+        //        colorIndex = 0;
+        //    }
+        //}
+#pragma endregion
+
 
   /*      std::set<vtkIdType> connectedCells;
         GetConnectedCellIds(overhangModelData, cellId, connectedCells);

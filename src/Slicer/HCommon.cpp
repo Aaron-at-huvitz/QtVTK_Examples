@@ -367,6 +367,7 @@ vtkSmartPointer<vtkPolyData> GetOverhangPolyData(vtkSmartPointer<vtkPolyData> mo
     auto output = vtkSmartPointer<vtkPolyData>::New();
 
     std::vector<vtkIdType> cellsToCreate;
+    std::vector<HVector3> cellNormalsToCreate;
 
     auto cellDatas = modelData->GetCellData();
     auto cellNormals = cellDatas->GetNormals();
@@ -385,6 +386,7 @@ vtkSmartPointer<vtkPolyData> GetOverhangPolyData(vtkSmartPointer<vtkPolyData> mo
             //cell->GetPoints()->GetPoint(1, p1);
             //cell->GetPoints()->GetPoint(2, p2);
             cellsToCreate.push_back(i);
+            cellNormalsToCreate.push_back(normal);
         }
     }
 
@@ -394,6 +396,9 @@ vtkSmartPointer<vtkPolyData> GetOverhangPolyData(vtkSmartPointer<vtkPolyData> mo
     output->SetPoints(points);
     vtkNew<vtkCellArray> polys;
     output->SetPolys(polys);
+    vtkNew<vtkDoubleArray> normals;
+    normals->SetNumberOfComponents(3);
+    output->GetCellData()->SetNormals(normals);
     for (size_t i = 0; i < cellsToCreate.size(); i++)
     {
         auto oldCellId = cellsToCreate[i];
@@ -420,7 +425,10 @@ vtkSmartPointer<vtkPolyData> GetOverhangPolyData(vtkSmartPointer<vtkPolyData> mo
 
         vtkIdType pids[3]{ pointIdMapping[pi0], pointIdMapping[pi1], pointIdMapping[pi2] };
         polys->InsertNextCell(3, pids);
+        normals->InsertNextTuple3(cellNormalsToCreate[i].x, cellNormalsToCreate[i].y, cellNormalsToCreate[i].z);
     }
+
+
 
     return output;
 }

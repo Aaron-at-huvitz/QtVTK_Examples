@@ -421,7 +421,7 @@ void HVisualDebugging::DrawSpheres()
 		auto b = std::get<4>(cubeInfo);
 
 		points->InsertNextPoint(center.xyz());
-		scales->InsertNextValue(scale);
+		scales->InsertNextValue(scale * 2);
 		unsigned char uc[3]{ r, g, b };
 		colors->InsertNextTypedTuple(uc);
 	}
