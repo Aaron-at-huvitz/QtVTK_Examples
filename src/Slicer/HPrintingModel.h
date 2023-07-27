@@ -20,15 +20,13 @@ public:
 
 	void Voxelize(vtkSmartPointer<vtkPolyData> modelData, double voxelSize);
 
-	void AnalyzeOverhang(double affectedDistance);
+	void AnalyzeOverhang(double angleThreshhold, double reliefDistance);
 	void AnalyzeIsland();
 
 	double GetLongestEdgeLength();
 	void Remesh(double edgeLength);
 
 	void Pick(double x, double y);
-
-	std::vector<vtkIdType> GetConnectedCellIds(vtkSmartPointer<vtkPolyData> modelData, vtkIdType cellId);
 
 	inline void ShowInitialModel(bool bShow) { ShowModel(initialModelActor, bShow); }
 	inline void ToggleInitialModelVisibility() { ToggleModelVisibility(initialModelActor); }

@@ -281,7 +281,7 @@ void HPrintingModel::Voxelize(vtkSmartPointer<vtkPolyData> modelData, double vox
     renderer->AddActor(volumeModelActor);
 }
 
-void HPrintingModel::AnalyzeOverhang(double affectedDistance)
+void HPrintingModel::AnalyzeOverhang(double angleThreshhold, double reliefDistance)
 {
     ClearOverhangModel();
 
@@ -298,15 +298,15 @@ void HPrintingModel::AnalyzeOverhang(double affectedDistance)
 
         double gravity[3] = { 0.0, 0.0, -1.0 };
         auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors(normal, gravity));
-        //if (angle < 45.0) angle = 45.0;
+        //if (angle < angleThreshhold) angle = angleThreshhold;
 
-        if (angle < 45.0)
+        if (angle < angleThreshhold)
         {
-            auto cell = initialModelData->GetCell(i);
-            double p0[3], p1[3], p2[3];
-            cell->GetPoints()->GetPoint(0, p0);
-            cell->GetPoints()->GetPoint(1, p1);
-            cell->GetPoints()->GetPoint(2, p2);
+            //auto cell = initialModelData->GetCell(i);
+            //double p0[3], p1[3], p2[3];
+            //cell->GetPoints()->GetPoint(0, p0);
+            //cell->GetPoints()->GetPoint(1, p1);
+            //cell->GetPoints()->GetPoint(2, p2);
 
             cellsToCreate.push_back(i);
             cellNormalsToCreate.push_back({ normal[0], normal[1], normal[2] });
@@ -348,14 +348,14 @@ void HPrintingModel::AnalyzeOverhang(double affectedDistance)
         vtkIdType pids[3]{ pointIdMapping[pi0], pointIdMapping[pi1], pointIdMapping[pi2] };
         polys->InsertNextCell(3, pids);
 
-        auto& newNormal = cellNormalsToCreate[i];
-        double gravity[3] = { 0.0, 0.0, -1.0 };
-        auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors((double*)&newNormal, gravity));
+        //auto& newNormal = cellNormalsToCreate[i];
+        //double gravity[3] = { 0.0, 0.0, -1.0 };
+        //auto angle = vtkMath::DegreesFromRadians(vtkMath::AngleBetweenVectors((double*)&newNormal, gravity));
     }
 
     vtkNew<vtkAdaptiveSubdivisionFilter> subdivisionFilter;
     subdivisionFilter->SetInputData(overhangModelData);
-    subdivisionFilter->SetMaximumEdgeLength(affectedDistance * 0.5);
+    subdivisionFilter->SetMaximumEdgeLength(reliefDistance * 0.5);
     subdivisionFilter->Update();
 
     vtkNew<vtkPolyDataNormals> polyDataNormals;
@@ -558,19 +558,12 @@ double HPrintingModel::GetLongestEdgeLength()
         auto numberOfPolys = initialModelData->GetNumberOfCells();
         for (size_t i = 0; i < numberOfPolys; i++)
         {
-            auto cell = initialModelData->GetCell(i);
-            auto pi0 = cell->GetPointId(0);
-            auto pi1 = cell->GetPointId(1);
-            auto pi2 = cell->GetPointId(2);
-
-            double p0[3], p1[3], p2[3];
-            initialModelData->GetPoint(pi0, p0);
-            initialModelData->GetPoint(pi1, p1);
-            initialModelData->GetPoint(pi2, p2);
-
-            auto ll0 = vtkMath::Distance2BetweenPoints(p0, p1);
-            auto ll1 = vtkMath::Distance2BetweenPoints(p1, p2);
-            auto ll2 = vtkMath::Distance2BetweenPoints(p2, p0);
+            HVector3 p0, p1, p2;
+            GetCellPoints(initialModelData, i, p0, p1, p2); 
+            
+            auto ll0 = HVector3::DistanceSquared(p0, p1);
+            auto ll1 = HVector3::DistanceSquared(p1, p2);
+            auto ll2 = HVector3::DistanceSquared(p2, p0);
 
             if (edgeLength < ll0) edgeLength = ll0;
             if (edgeLength < ll1) edgeLength = ll1;
@@ -617,28 +610,6 @@ void HPrintingModel::Remesh(double edgeLength)
     remeshedModelActor->SetMapper(remeshedModelMapper);
 }
 
-void GetNeighborCellIds(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId, std::list<vtkIdType>& neighborCellIds)
-{
-    vtkNew<vtkIdList> cellPointIds;
-    polyData->GetCellPoints(cellId, cellPointIds);
-
-    for (vtkIdType i = 0; i < cellPointIds->GetNumberOfIds(); i++)
-    {
-        vtkNew<vtkIdList> idList;
-        idList->InsertNextId(cellPointIds->GetId(i));
-
-        // get the neighbors of the cell
-        vtkNew<vtkIdList> ncIds;
-
-        polyData->GetCellNeighbors(cellId, idList, ncIds);
-
-        for (vtkIdType j = 0; j < ncIds->GetNumberOfIds(); j++)
-        {
-            neighborCellIds.push_back(ncIds->GetId(j));
-        }
-    }
-}
-
 void HPrintingModel::Pick(double x, double y)
 {
     vtkNew<vtkCellPicker> picker;
@@ -658,75 +629,73 @@ void HPrintingModel::Pick(double x, double y)
         auto pickPosition = picker->GetPickPosition();
         auto cellId = picker->GetCellId();
 
+        std::vector<std::set<vtkIdType>> group;
+        std::vector<int> cellGroupIds;
+        std::vector<double> groupAreas;
+        GetConnectedCellIds(overhangModelData, group, cellGroupIds, groupAreas);
 
+        std::vector<HColor3UC> colors;
+        //colors.push_back(HColor3UC(127, 0, 0));
+        //colors.push_back(HColor3UC(0, 127, 0));
+        //colors.push_back(HColor3UC(0, 0, 127));
+        //colors.push_back(HColor3UC(0, 127, 127));
+        //colors.push_back(HColor3UC(127, 0, 127));
+        //colors.push_back(HColor3UC(127, 127, 0));
+        //colors.push_back(HColor3UC(127, 127, 127));
+        colors.push_back(HColor3UC(255, 0, 0));
+        colors.push_back(HColor3UC(0, 255, 0));
+        colors.push_back(HColor3UC(0, 0, 255));
+        colors.push_back(HColor3UC(0, 255, 255));
+        colors.push_back(HColor3UC(255, 0, 255));
+        colors.push_back(HColor3UC(255, 255, 0));
+        colors.push_back(HColor3UC(255, 255, 255));
 
-        //auto subId = picker->GetSubId();
+        int colorIndex = 0;
+        for (auto& g : group)
+        {
+            auto color = colors[colorIndex];
+            for (auto& cid : g)
+            {
+                auto cell = overhangModelData->GetCell(cid);
 
-        //cout << "cellId: " << cellId << " subId: " << subId << endl;
-        //cout << "pickPosition: " << pickPosition[0] << ", " << pickPosition[1] << ", " << pickPosition[2] << endl;
+                auto points = cell->GetPoints();
+                double p0[3], p1[3], p2[3];
+                points->GetPoint(0, p0);
+                points->GetPoint(1, p1);
+                points->GetPoint(2, p2);
 
-        //HVisualDebugging::AddSphere(pickPosition, 0.25, 255, 0, 0);
-        //HVisualDebugging::AddLine(renderer->GetActiveCamera()->GetPosition(), pickPosition, 0, 0, 255);
+                HVisualDebugging::AddTriangle(p0, p1, p2, color.r, color.g, color.b);
+            }
 
-        //std::set<vtkIdType> visited;
-        //auto currentCellId = cellId;
-        //std::stack<vtkIdType> nextCellIds;
-        //nextCellIds.push(cellId);
-        //while (nextCellIds.size() != 0)
-        //{
-        //    currentCellId = nextCellIds.top();
-        //    nextCellIds.pop();
+            colorIndex++;
+            if (colorIndex > colors.size() - 1)
+            {
+                colorIndex = 0;
+            }
+        }
 
-        //    visited.insert(currentCellId);
+  /*      std::set<vtkIdType> connectedCells;
+        GetConnectedCellIds(overhangModelData, cellId, connectedCells);
 
-        //    std::list<vtkIdType> neighbors;
-        //    GetNeighborCellIds(overhangModelData, currentCellId, neighbors);
+        auto totalArea = 0.0;
 
-        //    for (auto& n : neighbors)
-        //    {
-        //        if (visited.count(n) == 0)
-        //        {
-        //            nextCellIds.push(n);
-        //        }
-        //    }
-        //}
+        for (auto& selectedCellId : connectedCells)
+        {
+            auto scell = overhangModelData->GetCell(selectedCellId);
+            auto points = scell->GetPoints();
+            double p0[3], p1[3], p2[3];
+            points->GetPoint(0, p0);
+            points->GetPoint(1, p1);
+            points->GetPoint(2, p2);
 
-        //auto totalArea = 0.0;
+            HVisualDebugging::AddTriangle(p0, p1, p2, 255, 0, 0);
 
-        //for (auto& selectedCellId : visited)
-        //{
-        //    auto scell = overhangModelData->GetCell(selectedCellId);
-        //    auto points = scell->GetPoints();
-        //    double p0[3], p1[3], p2[3];
-        //    points->GetPoint(0, p0);
-        //    points->GetPoint(1, p1);
-        //    points->GetPoint(2, p2);
+            auto area = TriangleArea(p0, p1, p2);
+            totalArea += area;
+        }
 
-        //    HVisualDebugging::AddTriangle(p0, p1, p2, 255, 0, 0);
-
-        //    auto area = TrianglArea(p0, p1, p2);
-        //    totalArea += area;
-
-        //    //HVisualDebugging::AddLine(p0, p1, 255, 0, 0);
-        //    //HVisualDebugging::AddLine(p1, p2, 255, 0, 0);
-        //    //HVisualDebugging::AddLine(p2, p0, 255, 0, 0);
-        //}
-
-        //cout << "Total AREA : " << totalArea << endl;
+        cout << "Total AREA : " << totalArea << endl;*/
     }
-}
-
-std::vector<vtkIdType> HPrintingModel::GetConnectedCellIds(vtkSmartPointer<vtkPolyData> modelData, vtkIdType cellId)
-{
-    std::vector<vtkIdType> output;
-
-    vtkNew<vtkPolyDataConnectivityFilter> filter;
-    filter->SetInputData(modelData);
-    filter->SetExtractionModeToCellSeededRegions();
-    filter->AddSeed(cellId);
-    filter->Update();
-
-    return output;
 }
 
 void HPrintingModel::ShowModel(vtkSmartPointer<vtkActor> actor, bool bShow)

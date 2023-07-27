@@ -618,6 +618,24 @@ void HVisualDebugging::ToggleSpheres()
 	}
 }
 
+void HVisualDebugging::ShowCubes(bool bShow)
+{
+	if (nullptr != s_cubeActor)
+	{
+		s_cubeActor->SetVisibility(bShow);
+		s_renderer->GetRenderWindow()->Render();
+	}
+}
+
+void HVisualDebugging::ToggleCubes()
+{
+	if (nullptr != s_cubeActor)
+	{
+		s_cubeActor->SetVisibility(!s_cubeActor->GetVisibility());
+		s_renderer->GetRenderWindow()->Render();
+	}
+}
+
 void HVisualDebugging::ShowArrows(bool bShow)
 {
 	if (nullptr != s_arrowActor)

@@ -58,6 +58,9 @@
     <ClCompile Include="HVisualDebugging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HCommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="QVTKWidget.h">

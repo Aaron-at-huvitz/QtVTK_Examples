@@ -73,6 +73,8 @@ private:
 	static void ToggleTriangles();
 	static void ShowSpheres(bool bShow);
 	static void ToggleSpheres();
+	static void ShowCubes(bool bShow);
+	static void ToggleCubes();
 	static void ShowArrows(bool bShow);
 	static void ToggleArrows();
 

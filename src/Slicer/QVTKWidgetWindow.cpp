@@ -99,6 +99,7 @@ void QVTKWidgetWindow::InitializeMenuBar()
     auto operationMenu = ui.menuBar->addMenu("Operation (&O)");
     operationMenu->addAction("Find Overhang (&O)", this, SLOT(OnMenuActionFindOverhang()));
     operationMenu->addAction("Find Island (&I)", this, SLOT(OnMenuActionFindIsland()));
+    operationMenu->addAction("Find Support Point (&P)", this, SLOT(OnMenuActionFindSupportPoint()));
     operationMenu->addAction("Voxelize (&V)", this, SLOT(OnMenuActionVoxelize()));
 }
 
@@ -129,9 +130,10 @@ void QVTKWidgetWindow::OnMenuActionFindOverhang()
     {
         StopWatch::Start("Analyze Overhang Face Normal");
 
-        double reliefDistance = 2.5;
+        double reliefDistance = 1.0;
+        double halfReliefDistance = reliefDistance * 0.5;
 
-        printingModel->AnalyzeOverhang(reliefDistance);
+        printingModel->AnalyzeOverhang(45, reliefDistance);
         ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
 
 #pragma region Draw Spheres
@@ -147,34 +149,59 @@ void QVTKWidgetWindow::OnMenuActionFindOverhang()
 
         std::sort(anglesOfCells.begin(), anglesOfCells.end());
 
+        std::vector<std::set<vtkIdType>> groups;
+        std::vector<int> cellGroupIds;
+        std::vector<double> groupAreas;
+        GetConnectedCellIds(pd, groups, cellGroupIds, groupAreas);
+
         std::set<vtkIdType> relievedCells;
 
         vtkNew<vtkCellLocator> cellLocator;
         cellLocator->SetDataSet(pd);
         cellLocator->BuildLocator();
 
+        for (size_t i = 0; i < anglesOfCells.size(); i++)
         {
-            auto& t = anglesOfCells[0];
-            auto cell = pd->GetCell(std::get<1>(t));
-            relievedCells.insert(std::get<1>(t));
+            auto& t = anglesOfCells[i];
+            auto cellId = std::get<1>(t);
+            auto groupId = cellGroupIds[cellId];
+            if (relievedCells.count(cellId) != 0)
+                continue;
+
+            auto groupArea = groupAreas[groupId];
+            if (groupArea < reliefDistance)
+            {
+                relievedCells.insert(cellId);
+                continue;
+            }
+
+            auto cell = pd->GetCell(cellId);
+            relievedCells.insert(cellId);
             auto points = cell->GetPoints();
             double p0[3], p1[3], p2[3];
             points->GetPoint(0, p0);
             points->GetPoint(1, p1);
             points->GetPoint(2, p2);
             auto center = TriangleCentroid(p0, p1, p2);
-            auto minPoint = center + HVector3(-reliefDistance, -reliefDistance, -reliefDistance);
-            auto maxPoint = center + HVector3(reliefDistance, reliefDistance, reliefDistance);
+            auto minPoint = center + HVector3(-halfReliefDistance, -halfReliefDistance, -halfReliefDistance);
+            auto maxPoint = center + HVector3(halfReliefDistance, halfReliefDistance, halfReliefDistance);
             double bb[6] = { minPoint.x, maxPoint.x, minPoint.y, maxPoint.y, minPoint.z, maxPoint.z };
             vtkNew<vtkIdList> cellsInBB;
             cellLocator->FindCellsWithinBounds(bb, cellsInBB);
             auto noi = cellsInBB->GetNumberOfIds();
-            for (size_t i = 0; i < noi; i++)
+            for (size_t id = 0; id < noi; id++)
             {
-                relievedCells.insert(cellsInBB->GetId(i));
+                auto cid = cellsInBB->GetId(id);
+                if (groups[groupId].count(cid) != 0) {
+                    auto gid = cellGroupIds[cid];
+                    {
+                        relievedCells.insert(cid);
+                    }
+                }
+                //relievedCells.insert(cid);
             }
 
-            HVisualDebugging::AddCube(center, 1, 0, 0, 255);
+            HVisualDebugging::AddCube(center, 0.5, 0, 0, 255);
         }
 
         for (size_t i = 0; i < anglesOfCells.size(); i++)
@@ -202,6 +229,128 @@ void QVTKWidgetWindow::OnMenuActionFindOverhang()
 #pragma endregion
 
         StopWatch::Stop("Analyze Overhang Face Normal");
+    }
+}
+
+void QVTKWidgetWindow::OnMenuActionFindSupportPoint()
+{
+    bool useFiltering = true;
+    double angleThreshhold = 45;
+
+    if (nullptr != printingModel)
+    {
+        auto polyData = GetOverhangPolyData(printingModel->GetInitialModelData(), angleThreshhold);
+
+        double reliefDistance = 2.0;
+
+        double remeshEdgeLength = reliefDistance;
+        std::vector<vtkSmartPointer<vtkPolyData>> polyDatas;
+        std::vector<double> groupAreas;
+        SplitPolyDataWithRemesh(polyData, remeshEdgeLength, polyDatas, groupAreas);
+
+        vtkNew<vtkNamedColors> namedColors;
+        vector<vtkColor3d> colors;
+        colors.push_back(namedColors->GetColor3d("Brown"));
+        colors.push_back(namedColors->GetColor3d("Cyan"));
+        colors.push_back(namedColors->GetColor3d("Yellow"));
+        colors.push_back(namedColors->GetColor3d("Grey"));
+        colors.push_back(namedColors->GetColor3d("Blue"));
+        colors.push_back(namedColors->GetColor3d("Green"));
+        colors.push_back(namedColors->GetColor3d("Red"));
+        colors.push_back(namedColors->GetColor3d("Magenta"));
+        colors.push_back(namedColors->GetColor3d("Oranges"));
+        colors.push_back(namedColors->GetColor3d("White"));
+
+        for (size_t i = 0; i < polyDatas.size(); i++)
+        {
+            if (groupAreas[i] < 3)
+                continue;
+
+            //if (i % (colors.size() - 1) == 0)
+            //{
+            //    std::reverse(colors.begin(), colors.end());
+            //}
+
+            auto color = colors[i % (colors.size() - 1)];
+            auto c = color.GetData();
+            unsigned char r = (unsigned char)(c[0] * 255);
+            unsigned char g = (unsigned char)(c[1] * 255);
+            unsigned char b = (unsigned char)(c[2] * 255);
+            unsigned char rr = (unsigned char)((1 - c[0]) * 255);
+            unsigned char rg = (unsigned char)((1 - c[1]) * 255);
+            unsigned char rb = (unsigned char)((1 - c[2]) * 255);
+
+            auto& pd = polyDatas[i];
+
+            std::set<vtkIdType> relievedCellIds;
+
+            HVolume volume(reliefDistance * 2, pd);
+            auto resolutionX = volume.GetResolutionX();
+            auto resolutionY = volume.GetResolutionY();
+            auto resolutionZ = volume.GetResolutionZ();
+            for (size_t z = 0; z < resolutionZ; z++)
+            {
+                for (size_t y = 0; y < resolutionY; y++)
+                {
+                    for (size_t x = 0; x < resolutionX; x++)
+                    {
+                        auto& voxel = volume.GetVoxel(x, y, z);
+                        if (voxel.IsOccupied())
+                        {
+                            auto& vc = voxel.GetCenter();
+
+                            HVisualDebugging::AddCube(vc, reliefDistance * 2, r, g, b);
+
+                            auto minDistCellId = voxel.GetMinimumDistanceCellId();
+                            auto cell = pd->GetCell(minDistCellId);
+                            auto points = cell->GetPoints();
+                            double p0[3], p1[3], p2[3];
+                            points->GetPoint(0, p0);
+                            points->GetPoint(1, p1);
+                            points->GetPoint(2, p2);
+                            auto center = TriangleCentroid(p0, p1, p2);
+
+                            HVisualDebugging::AddSphere(center, 1, r, g, b);
+                        }
+                    }
+                }
+            }
+
+            //auto overhangCellIds = GetOverhangCellIds(pd);
+            //for (auto& t : overhangCellIds)
+            //{
+            //    auto angle = std::get<0>(t);
+            //    auto cellId = std::get<1>(t);
+            //    if (relievedCellIds.count(cellId) != 0)
+            //        continue;
+
+            //    auto cell = pd->GetCell(cellId);
+            //    auto points = cell->GetPoints();
+            //    double p0[3], p1[3], p2[3];
+            //    points->GetPoint(0, p0);
+            //    points->GetPoint(1, p1);
+            //    points->GetPoint(2, p2);
+            //    auto center = TriangleCentroid(p0, p1, p2);
+
+            //    auto& voxel = volume.GetVoxel(center);
+            //    auto& cellIds = voxel.GetCellIds();
+            //    relievedCellIds.insert(cellIds.begin(), cellIds.end());
+
+            //    HVisualDebugging::AddSphere(center, 1, rr, rg, rb);
+            //}
+
+
+            vtkNew<vtkPolyDataMapper> mapper;
+            mapper->SetInputData(pd);
+            vtkNew<vtkActor> actor;
+            actor->SetMapper(mapper);
+
+            actor->GetProperty()->SetColor(color.GetData());
+
+            auto renderers = ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->GetRenderers();
+            auto renderer = renderers->GetFirstRenderer();
+            renderer->AddActor(actor);
+        }
     }
 }
 
@@ -334,6 +483,7 @@ void QVTKWidgetWindow::keyReleaseEvent(QKeyEvent* event)
         HVisualDebugging::ToggleLines();
         HVisualDebugging::ToggleTriangles();
         HVisualDebugging::ToggleSpheres();
+        HVisualDebugging::ToggleCubes();
     }
     else if (event->key() == Qt::Key_F1)
     {
@@ -379,25 +529,39 @@ void QVTKWidgetWindow::keyReleaseEvent(QKeyEvent* event)
     }
     else if (event->key() == Qt::Key_Space)
     {
-        HVector3 p0, p1, p2;
-        p0.x = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
-        p0.y = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
-        p0.z = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        //HVector3 p0, p1, p2;
+        //p0.x = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        //p0.y = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        //p0.z = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
 
-        p1.x = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
-        p1.y = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
-        p1.z = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        //p1.x = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        //p1.y = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        //p1.z = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
 
-        p2.x = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
-        p2.y = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
-        p2.z = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        //p2.x = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        //p2.y = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
+        //p2.z = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
 
-        unsigned char r = unsigned char(static_cast<double>(rand()) / (static_cast<double>(RAND_MAX)) * 255);
-        unsigned char g = unsigned char(static_cast<double>(rand()) / (static_cast<double>(RAND_MAX)) * 255);
-        unsigned char b = unsigned char(static_cast<double>(rand()) / (static_cast<double>(RAND_MAX)) * 255);
+        //unsigned char r = unsigned char(static_cast<double>(rand()) / (static_cast<double>(RAND_MAX)) * 255);
+        //unsigned char g = unsigned char(static_cast<double>(rand()) / (static_cast<double>(RAND_MAX)) * 255);
+        //unsigned char b = unsigned char(static_cast<double>(rand()) / (static_cast<double>(RAND_MAX)) * 255);
 
-        HVisualDebugging::AddTriangle(p0, p1, p2, r, g, b);
-        ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+        //HVisualDebugging::AddTriangle(p0, p1, p2, r, g, b);
+        //ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
+
+        vtkNew<vtkCubeSource> cubeSource;
+        cubeSource->SetXLength(1);
+        cubeSource->SetYLength(1);
+        cubeSource->SetZLength(1);
+        cubeSource->Update();
+
+        vtkNew<vtkPolyDataMapper> cubeMapper;
+        cubeMapper->SetInputConnection(cubeSource->GetOutputPort());
+
+        vtkNew<vtkActor> cubeActor;
+        cubeActor->SetMapper(cubeMapper);
+
+        ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(cubeActor);
     }
 }
 
