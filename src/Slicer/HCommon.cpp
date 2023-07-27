@@ -236,6 +236,17 @@ void GetCellPoints(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId, HVec
     points->GetPoint(2, (double*)&p2);
 }
 
+HVector3 GetCellCenter(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId)
+{
+    HVector3 p0, p1, p2;
+    auto cell = polyData->GetCell(cellId);
+    auto points = cell->GetPoints();
+    points->GetPoint(0, (double*)&p0);
+    points->GetPoint(1, (double*)&p1);
+    points->GetPoint(2, (double*)&p2);
+    return TriangleCentroid(p0, p1, p2);
+}
+
 void GetNeighborCellIds(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId, std::list<vtkIdType>& neighborCellIds)
 {
     vtkNew<vtkIdList> cellPointIds;
@@ -285,6 +296,8 @@ void GetConnectedCellIdsFromCell(vtkSmartPointer<vtkPolyData> polyData, vtkIdTyp
 
 void GetConnectedCellIdsFromCellWithInDistance(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId, double distance, std::set<vtkIdType>& connectedCellIds)
 {
+    auto cellCenter = GetCellCenter(polyData, cellId);
+
     auto currentCellId = cellId;
     std::stack<vtkIdType> nextCellIds;
     nextCellIds.push(cellId);
@@ -302,7 +315,12 @@ void GetConnectedCellIdsFromCellWithInDistance(vtkSmartPointer<vtkPolyData> poly
         {
             if (connectedCellIds.count(n) == 0)
             {
-                nextCellIds.push(n);
+                HVector3 nc = GetCellCenter(polyData, n);
+                auto d = HVector3::Distance(cellCenter, nc);
+                if (d < distance)
+                {
+                    nextCellIds.push(n);
+                }
             }
         }
     }

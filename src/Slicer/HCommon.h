@@ -266,6 +266,7 @@ inline HVector3 TriangleCentroid(const HVector3& p0, const HVector3& p1, const H
 }
 
 void GetCellPoints(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId, HVector3& p0, HVector3& p1, HVector3& p2);
+HVector3 GetCellCenter(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId);
 
 void GetNeighborCellIds(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId, std::list<vtkIdType>& neighborCellIds);
 void GetConnectedCellIdsFromCell(vtkSmartPointer<vtkPolyData> polyData, vtkIdType cellId, std::set<vtkIdType>& connectedCellIds);
