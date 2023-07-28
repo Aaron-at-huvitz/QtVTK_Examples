@@ -103,5 +103,8 @@
     <ClInclude Include="HCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HEventDispatcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

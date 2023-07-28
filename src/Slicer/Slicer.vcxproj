@@ -127,6 +127,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HCommon.h" />
+    <ClInclude Include="HEventDispatcher.h" />
     <ClInclude Include="HVisualDebugging.h" />
     <ClInclude Include="HVolume.h" />
     <ClInclude Include="ModelClipper.h" />
