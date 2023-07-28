@@ -108,7 +108,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="HCommon.cpp" />
-    <ClCompile Include="HEventDispatcher.cpp" />
     <ClCompile Include="HVisualDebugging.cpp" />
     <ClCompile Include="StopWatch.cpp" />
     <ClCompile Include="QVoxelizationOptionDialog.cpp" />

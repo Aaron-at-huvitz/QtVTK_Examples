@@ -169,95 +169,95 @@ void QVTKWidgetWindow::OnMenuActionFindOverhang()
         ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->Render();
 
 #pragma region Draw Spheres
-        std::vector<std::tuple<double, vtkIdType>> anglesOfCells;
+        //std::vector<std::tuple<double, vtkIdType>> anglesOfCells;
 
-        auto pd = printingModel->GetOverhangModelData();
-        auto overhangIntensity = vtkFloatArray::SafeDownCast(pd->GetCellData()->GetScalars());
-        for (size_t i = 0; i < overhangIntensity->GetNumberOfValues(); i++)
-        {
-            auto angle = overhangIntensity->GetValue(i);
-            anglesOfCells.push_back(make_tuple(angle, i));
-        }
+        //auto pd = printingModel->GetOverhangModelData();
+        //auto overhangIntensity = vtkFloatArray::SafeDownCast(pd->GetCellData()->GetScalars());
+        //for (size_t i = 0; i < overhangIntensity->GetNumberOfValues(); i++)
+        //{
+        //    auto angle = overhangIntensity->GetValue(i);
+        //    anglesOfCells.push_back(make_tuple(angle, i));
+        //}
 
-        std::sort(anglesOfCells.begin(), anglesOfCells.end());
+        //std::sort(anglesOfCells.begin(), anglesOfCells.end());
 
-        std::vector<std::set<vtkIdType>> groups;
-        std::vector<int> cellGroupIds;
-        std::vector<double> groupAreas;
-        GetConnectedCellIds(pd, groups, cellGroupIds, groupAreas);
+        //std::vector<std::set<vtkIdType>> groups;
+        //std::vector<int> cellGroupIds;
+        //std::vector<double> groupAreas;
+        //GetConnectedCellIds(pd, groups, cellGroupIds, groupAreas);
 
-        std::set<vtkIdType> relievedCells;
+        //std::set<vtkIdType> relievedCells;
 
-        vtkNew<vtkCellLocator> cellLocator;
-        cellLocator->SetDataSet(pd);
-        cellLocator->BuildLocator();
+        //vtkNew<vtkCellLocator> cellLocator;
+        //cellLocator->SetDataSet(pd);
+        //cellLocator->BuildLocator();
 
-        for (size_t i = 0; i < anglesOfCells.size(); i++)
-        {
-            auto& t = anglesOfCells[i];
-            auto cellId = std::get<1>(t);
-            auto groupId = cellGroupIds[cellId];
-            if (relievedCells.count(cellId) != 0)
-                continue;
+        //for (size_t i = 0; i < anglesOfCells.size(); i++)
+        //{
+        //    auto& t = anglesOfCells[i];
+        //    auto cellId = std::get<1>(t);
+        //    auto groupId = cellGroupIds[cellId];
+        //    if (relievedCells.count(cellId) != 0)
+        //        continue;
 
-            auto groupArea = groupAreas[groupId];
-            if (groupArea < reliefDistance)
-            {
-                relievedCells.insert(cellId);
-                continue;
-            }
+        //    auto groupArea = groupAreas[groupId];
+        //    if (groupArea < reliefDistance)
+        //    {
+        //        relievedCells.insert(cellId);
+        //        continue;
+        //    }
 
-            auto cell = pd->GetCell(cellId);
-            relievedCells.insert(cellId);
-            auto points = cell->GetPoints();
-            double p0[3], p1[3], p2[3];
-            points->GetPoint(0, p0);
-            points->GetPoint(1, p1);
-            points->GetPoint(2, p2);
-            auto center = TriangleCentroid(p0, p1, p2);
-            auto minPoint = center + HVector3(-halfReliefDistance, -halfReliefDistance, -halfReliefDistance);
-            auto maxPoint = center + HVector3(halfReliefDistance, halfReliefDistance, halfReliefDistance);
-            double bb[6] = { minPoint.x, maxPoint.x, minPoint.y, maxPoint.y, minPoint.z, maxPoint.z };
-            vtkNew<vtkIdList> cellsInBB;
-            cellLocator->FindCellsWithinBounds(bb, cellsInBB);
-            auto noi = cellsInBB->GetNumberOfIds();
-            for (size_t id = 0; id < noi; id++)
-            {
-                auto cid = cellsInBB->GetId(id);
-                if (groups[groupId].count(cid) != 0) {
-                    auto gid = cellGroupIds[cid];
-                    {
-                        relievedCells.insert(cid);
-                    }
-                }
-                //relievedCells.insert(cid);
-            }
+        //    auto cell = pd->GetCell(cellId);
+        //    relievedCells.insert(cellId);
+        //    auto points = cell->GetPoints();
+        //    double p0[3], p1[3], p2[3];
+        //    points->GetPoint(0, p0);
+        //    points->GetPoint(1, p1);
+        //    points->GetPoint(2, p2);
+        //    auto center = TriangleCentroid(p0, p1, p2);
+        //    auto minPoint = center + HVector3(-halfReliefDistance, -halfReliefDistance, -halfReliefDistance);
+        //    auto maxPoint = center + HVector3(halfReliefDistance, halfReliefDistance, halfReliefDistance);
+        //    double bb[6] = { minPoint.x, maxPoint.x, minPoint.y, maxPoint.y, minPoint.z, maxPoint.z };
+        //    vtkNew<vtkIdList> cellsInBB;
+        //    cellLocator->FindCellsWithinBounds(bb, cellsInBB);
+        //    auto noi = cellsInBB->GetNumberOfIds();
+        //    for (size_t id = 0; id < noi; id++)
+        //    {
+        //        auto cid = cellsInBB->GetId(id);
+        //        if (groups[groupId].count(cid) != 0) {
+        //            auto gid = cellGroupIds[cid];
+        //            {
+        //                relievedCells.insert(cid);
+        //            }
+        //        }
+        //        //relievedCells.insert(cid);
+        //    }
 
-            HVisualDebugging::AddCube(center, 0.5, 0, 0, 255);
-        }
+        //    HVisualDebugging::AddCube(center, 0.5, 0, 0, 255);
+        //}
 
-        for (size_t i = 0; i < anglesOfCells.size(); i++)
-        {
-            auto& t = anglesOfCells[i];
+        //for (size_t i = 0; i < anglesOfCells.size(); i++)
+        //{
+        //    auto& t = anglesOfCells[i];
 
-            if (relievedCells.count(std::get<1>(t)) != 0)
-                continue;
+        //    if (relievedCells.count(std::get<1>(t)) != 0)
+        //        continue;
 
-            auto cell = pd->GetCell(std::get<1>(t));
-            auto points = cell->GetPoints();
-            double p0[3], p1[3], p2[3];
-            points->GetPoint(0, p0);
-            points->GetPoint(1, p1);
-            points->GetPoint(2, p2);
+        //    auto cell = pd->GetCell(std::get<1>(t));
+        //    auto points = cell->GetPoints();
+        //    double p0[3], p1[3], p2[3];
+        //    points->GetPoint(0, p0);
+        //    points->GetPoint(1, p1);
+        //    points->GetPoint(2, p2);
 
-            auto ratio = 1 - (double)i / (double)anglesOfCells.size();
-            auto r = 255.0 * ratio;
-            auto b = 255.0 * (1 - ratio);
-            auto center = TriangleCentroid(p0, p1, p2);
+        //    auto ratio = 1 - (double)i / (double)anglesOfCells.size();
+        //    auto r = 255.0 * ratio;
+        //    auto b = 255.0 * (1 - ratio);
+        //    auto center = TriangleCentroid(p0, p1, p2);
 
-            HVisualDebugging::AddSphere(center, 5 * ratio, (unsigned char)r, 0, (unsigned char)b);
-            //break;
-        }
+        //    HVisualDebugging::AddSphere(center, 5 * ratio, (unsigned char)r, 0, (unsigned char)b);
+        //    //break;
+        //}
 #pragma endregion
 
         StopWatch::Stop("Analyze Overhang Face Normal");
@@ -267,13 +267,45 @@ void QVTKWidgetWindow::OnMenuActionFindOverhang()
 void QVTKWidgetWindow::OnMenuActionFindSupportPoint()
 {
     bool useFiltering = true;
-    double angleThreshhold = 45;
+    double angleThreshhold = 40;
+    double areaThreshhold = 5;
+    double reliefDistance = 3.0;
+    double halfReliefDistance = reliefDistance * 0.5;
 
+    int cnt = 0;
     if (nullptr != printingModel)
     {
         auto polyData = GetOverhangPolyData(printingModel->GetInitialModelData(), angleThreshhold);
+        //auto polyData = printingModel->GetInitialModelData();
 
-        double reliefDistance = 3.0;
+        polyData = FilterSmallCells(polyData, areaThreshhold);
+
+#pragma region Show PolyData
+        //vtkNew<vtkPolyDataMapper> mapper;
+        //mapper->SetInputData(polyData);
+        //vtkNew<vtkActor> actor;
+        //actor->SetMapper(mapper);
+        //ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(actor);
+#pragma endregion
+
+        auto volume = HVolume(reliefDistance, polyData);
+        //auto resolutionX = volume.GetResolutionX();
+        //auto resolutionY = volume.GetResolutionY();
+        //auto resolutionZ = volume.GetResolutionZ();
+        //for (size_t z = 0; z < resolutionZ; z++)
+        //{
+        //    for (size_t y = 0; y < resolutionY; y++)
+        //    {
+        //        for (size_t x = 0; x < resolutionX; x++)
+        //        {
+        //            auto& voxel = volume.GetVoxel(x, y, z);
+        //            if (voxel.IsOccupied())
+        //            {
+        //                HVisualDebugging::AddCube(voxel.GetCenter(), volume.GetVoxelSize(), 255, 0, 0);
+        //            }
+        //        }
+        //    }
+        //}
 
         std::set<vtkIdType> relievedCellIds;
         auto overhangCellIds = GetOverhangCellIds(polyData);
@@ -284,19 +316,38 @@ void QVTKWidgetWindow::OnMenuActionFindSupportPoint()
             if (relievedCellIds.count(cellId) != 0)
                 continue;
 
-            auto cell = polyData->GetCell(cellId);
-            auto points = cell->GetPoints();
-            double p0[3], p1[3], p2[3];
-            points->GetPoint(0, p0);
-            points->GetPoint(1, p1);
-            points->GetPoint(2, p2);
-            auto center = TriangleCentroid(p0, p1, p2);
+            relievedCellIds.insert(cellId);
 
-            HVisualDebugging::AddSphere(center, reliefDistance, 255, 0, 0);
+            auto cellCenter = GetCellCenter(polyData, cellId);
+            HVisualDebugging::AddCube(cellCenter, 1, 0, 0, 255);
 
-            std::set<vtkIdType> connectedCellIds;
-            GetConnectedCellIdsFromCellWithInDistance(polyData, cellId, reliefDistance, connectedCellIds);
-            relievedCellIds.insert(connectedCellIds.begin(), connectedCellIds.end());
+            auto index = volume.GetIndex(cellCenter);
+            auto minx = index.x - 1; if (minx < 0) { minx = 0; }
+            auto maxx = index.x + 1; if (maxx > volume.GetResolutionX() - 1) { maxx = volume.GetResolutionX() - 1; }
+            auto miny = index.y - 1; if (miny < 0) { miny = 0; }
+            auto maxy = index.y + 1; if (maxy > volume.GetResolutionY() - 1) { maxy = volume.GetResolutionY() - 1; }
+            auto minz = index.z - 1; if (minz < 0) { minz = 0; }
+            auto maxz = index.z + 1; if (maxz > volume.GetResolutionZ() - 1) { maxz = volume.GetResolutionZ() - 1; }
+
+            for (int z = minz; z <= maxz; z++)
+            {
+                for (int y = miny; y <= maxy; y++)
+                {
+                    for (int x = minx; x <= maxx; x++)
+                    {
+                        auto& voxel = volume.GetVoxel(x, y, z);
+                        auto cellIds = voxel.GetCellIds();
+                        for (auto& cid : cellIds)
+                        {
+                            auto cc = GetCellCenter(polyData, cid);
+                            if (HVector3::Distance(cellCenter, cc) < reliefDistance)
+                            {
+                                relievedCellIds.insert(cid);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -410,6 +461,17 @@ void QVTKWidgetWindow::mouseReleaseEvent(QMouseEvent* event)
                 double vtkY = (vtkWidgetHeight - qtY) * scaleY;
 
                 printingModel->Pick(vtkX, vtkY);
+
+                vtkNew<vtkCellPicker> picker;
+                picker->SetTolerance(0.0005);
+
+                picker->Pick(vtkX, vtkY, 0, renderer);
+                auto pickedActor = picker->GetActor();
+                if (nullptr != pickedActor)
+                {
+                    HVector3 pickPosition = picker->GetPickPosition();
+                    cout << pickPosition << endl;
+                }
 
                 vtkNativeWidget->renderWindow()->Render();
             }

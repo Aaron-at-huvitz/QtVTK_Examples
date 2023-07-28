@@ -85,6 +85,8 @@ public:
     inline double* xyz() { return (double*)this; }
 };
 
+std::ostream& operator<<(std::ostream& os, HVector3 const& v);
+
 class HColor3D {
 public:
     double r, g, b;
@@ -307,6 +309,7 @@ void GetConnectedCellIdsFromCellWithInDistance(vtkSmartPointer<vtkPolyData> poly
 void GetConnectedCellIds(vtkSmartPointer<vtkPolyData> polyData, std::vector<std::set<vtkIdType>>& connectedCellIds, std::vector<int>& cellGroupIds, std::vector<double>& cellGroupAreas); 
 
 vtkSmartPointer<vtkPolyData> GetOverhangPolyData(vtkSmartPointer<vtkPolyData> modelData, double angleThreshhold);
+vtkSmartPointer<vtkPolyData> FilterSmallCells(vtkSmartPointer<vtkPolyData> modelData, double areaThreshhold);
 void SplitPolyData(vtkSmartPointer<vtkPolyData> modelData, std::vector<vtkSmartPointer<vtkPolyData>>& result, std::vector<double>& groupAreas);
 void SplitPolyDataWithRemesh(vtkSmartPointer<vtkPolyData> modelData, double remeshEdgeLength, std::vector<vtkSmartPointer<vtkPolyData>>& result, std::vector<double>& groupAreas);
 std::vector<std::tuple<double, vtkIdType>> GetOverhangCellIds(vtkSmartPointer<vtkPolyData> polyData);

@@ -1,5 +1,9 @@
 #include "HCommon.h"
 
+std::ostream& operator<<(std::ostream& os, HVector3 const& v) {
+    return os << "[" << v.x << ", " << v.y << ", " << v.z << "]" << endl;
+}
+
 HAABB::HAABB(const HVector3& minPoint, const HVector3& maxPoint)
     : xyz(minPoint), XYZ(maxPoint)
 {
@@ -428,7 +432,72 @@ vtkSmartPointer<vtkPolyData> GetOverhangPolyData(vtkSmartPointer<vtkPolyData> mo
         normals->InsertNextTuple3(cellNormalsToCreate[i].x, cellNormalsToCreate[i].y, cellNormalsToCreate[i].z);
     }
 
+    return output;
+}
 
+vtkSmartPointer<vtkPolyData> FilterSmallCells(vtkSmartPointer<vtkPolyData> polyData, double areaThreshhold)
+{
+    std::vector<std::set<vtkIdType>> connectedCellIds;
+    std::vector<int> cellGroupIds;
+    std::vector<double> groupAreas;
+    GetConnectedCellIds(polyData, connectedCellIds, cellGroupIds, groupAreas);
+
+    std::vector<vtkIdType> cellsToCreate;
+    for (size_t groupId = 0; groupId < connectedCellIds.size(); groupId++)
+    {
+        if (groupAreas[groupId] < areaThreshhold)
+            continue;
+
+        auto& group = connectedCellIds[groupId];
+        for (auto& cellId : group)
+        {
+            cellsToCreate.push_back(cellId);
+        }
+    }
+
+    std::map<vtkIdType, vtkIdType> pointIdMapping;
+
+    auto temp = vtkSmartPointer<vtkPolyData>::New();
+    vtkNew<vtkPoints> points;
+    temp->SetPoints(points);
+    vtkNew<vtkCellArray> polys;
+    temp->SetPolys(polys);
+
+    for (size_t i = 0; i < cellsToCreate.size(); i++)
+    {
+        auto oldCellId = cellsToCreate[i];
+        auto oldCell = polyData->GetCell(oldCellId);
+        auto pi0 = oldCell->GetPointId(0);
+        auto pi1 = oldCell->GetPointId(1);
+        auto pi2 = oldCell->GetPointId(2);
+        double p0[3], p1[3], p2[3];
+        if (pointIdMapping.count(pi0) == 0) {
+            polyData->GetPoint(pi0, p0);
+            auto npi0 = points->InsertNextPoint(p0);
+            pointIdMapping[pi0] = npi0;
+        }
+        if (pointIdMapping.count(pi1) == 0) {
+            polyData->GetPoint(pi1, p1);
+            auto npi1 = points->InsertNextPoint(p1);
+            pointIdMapping[pi1] = npi1;
+        }
+        if (pointIdMapping.count(pi2) == 0) {
+            polyData->GetPoint(pi2, p2);
+            auto npi2 = points->InsertNextPoint(p2);
+            pointIdMapping[pi2] = npi2;
+        }
+
+        vtkIdType pids[3]{ pointIdMapping[pi0], pointIdMapping[pi1], pointIdMapping[pi2] };
+        polys->InsertNextCell(3, pids);
+    }
+
+    vtkNew<vtkPolyDataNormals> polyDataNormals;
+    polyDataNormals->SetInputData(temp);
+    polyDataNormals->ComputeCellNormalsOn();
+    polyDataNormals->Update();
+
+    auto output = vtkSmartPointer<vtkPolyData>::New();
+    output->DeepCopy(polyDataNormals->GetOutput());
 
     return output;
 }
