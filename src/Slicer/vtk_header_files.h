@@ -77,6 +77,8 @@
 
 #include <vtkExtractCells.h>
 
+#include <vtkInteractorStyleTrackballCamera.h>
+
 #include <vtkSTLReader.h>
 #include <vtkOBJReader.h>
 #include <vtkPLYReader.h>

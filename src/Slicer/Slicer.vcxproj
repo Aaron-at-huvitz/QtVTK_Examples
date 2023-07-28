@@ -108,6 +108,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="HCommon.cpp" />
+    <ClCompile Include="HEventDispatcher.cpp" />
     <ClCompile Include="HVisualDebugging.cpp" />
     <ClCompile Include="StopWatch.cpp" />
     <ClCompile Include="QVoxelizationOptionDialog.cpp" />
@@ -127,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HCommon.h" />
+    <ClInclude Include="HEventDispatcher.h" />
     <ClInclude Include="HVisualDebugging.h" />
     <ClInclude Include="HVolume.h" />
     <ClInclude Include="ModelClipper.h" />

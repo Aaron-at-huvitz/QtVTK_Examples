@@ -9,8 +9,11 @@
 
 #include "QVoxelizationOptionDialog.h"
 
+#include "HEventDispatcher.h"
+
 class HPrintingModel;
 class HVisualDebugging;
+class CustomInteractorStyle;
 
 class QVTKWidgetWindow : public QMainWindow
 {
@@ -45,6 +48,8 @@ public slots:
 
 
 protected:
+    vtkSmartPointer<CustomInteractorStyle> customInteractorStyle = nullptr;
+
     HPrintingModel* printingModel = nullptr;
     QVoxelizationOptionDialog* voxelizationOptionDialog = nullptr;
     vtkSmartPointer<vtkOrientationMarkerWidget> orientationMarkerWidget = nullptr;
@@ -52,6 +57,8 @@ protected:
     QPoint lastMouseLButtonPosition;
     QPoint lastMouseRButtonPosition;
     QPoint lastMouseMButtonPosition;
+
+    HEventDispatcher eventDispatcher;
 
 public:
     void LoadModel(const QString& fileName);

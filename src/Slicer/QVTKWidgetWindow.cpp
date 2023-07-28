@@ -7,6 +7,26 @@
 #include "HVolume.h"
 #include "StopWatch.h"
 
+class CustomInteractorStyle : public vtkInteractorStyleTrackballCamera
+{
+public:
+    static CustomInteractorStyle* New();
+    vtkTypeMacro(CustomInteractorStyle, vtkInteractorStyleTrackballCamera);
+
+    virtual void OnChar() override
+    {
+        // Check if the keypress corresponds to the keys used for enabling/disabling stereo mode
+        if (this->Interactor->GetKeyCode() == '3')
+        {
+            return; // Ignore the keypress for stereo mode activation
+        }
+
+        // If it's not the stereo mode activation key, handle the event as usual
+        vtkInteractorStyleTrackballCamera::OnChar();
+    }
+};
+vtkStandardNewMacro(CustomInteractorStyle);
+
 QVTKWidgetWindow::QVTKWidgetWindow(QWidget* parent)
     : QMainWindow(parent)
 {
@@ -41,12 +61,15 @@ QVTKWidgetWindow::~QVTKWidgetWindow()
 void QVTKWidgetWindow::InitializeVTK()
 {
     vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
+    renderWindow->StereoRenderOff();
     vtkNew<vtkRenderer> renderer;
     renderer->SetBackground(0.3, 0.5, 0.7);
+    customInteractorStyle = vtkSmartPointer<CustomInteractorStyle>::New();
 
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->setRenderWindow(renderWindow);
     ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->AddRenderer(renderer);
-
+    ui.vtkWidget->GetVTKOpenGLNativeWidget()->interactor()->SetInteractorStyle(customInteractorStyle);
+    ui.vtkWidget->GetVTKOpenGLNativeWidget()->renderWindow()->GetInteractor()->SetInteractorStyle(customInteractorStyle);
     HVisualDebugging::Initialize(renderer);
 
 
@@ -89,6 +112,15 @@ void QVTKWidgetWindow::InitializeVTK()
     //renderer->AddActor(contourActor);
 
     renderer->ResetCamera();
+
+    eventDispatcher.AddKeyReleaseEventHandler(Qt::Key_QuoteLeft, HVisualDebugging::ToggleAll);
+    eventDispatcher.AddKeyReleaseEventHandler(Qt::Key_AsciiTilde, HVisualDebugging::ToggleAllRepresentation);
+    eventDispatcher.AddKeyReleaseEventHandler(Qt::Key_1, [&]() { if (nullptr != printingModel) printingModel->ToggleInitialModelVisibility(); });
+    eventDispatcher.AddKeyReleaseEventHandler(Qt::Key_Exclam, [&]() { if (nullptr != printingModel) printingModel->ToggleInitialModelRepresentation(); });
+    eventDispatcher.AddKeyReleaseEventHandler(Qt::Key_2, [&]() { if (nullptr != printingModel) printingModel->ToggleVolumeModelVisibility(); });
+    eventDispatcher.AddKeyReleaseEventHandler(Qt::Key_At, [&]() { if (nullptr != printingModel) printingModel->ToggleVolumeModelRepresentation(); });
+    eventDispatcher.AddKeyReleaseEventHandler(Qt::Key_3, [&]() { if (nullptr != printingModel) printingModel->ToggleOverhangModelVisibility(); });
+    eventDispatcher.AddKeyReleaseEventHandler(Qt::Key_NumberSign, [&]() { if (nullptr != printingModel) printingModel->ToggleOverhangModelRepresentation(); });
 }
 
 void QVTKWidgetWindow::InitializeMenuBar()
@@ -392,61 +424,9 @@ void QVTKWidgetWindow::keyPressEvent(QKeyEvent* event)
 
 void QVTKWidgetWindow::keyReleaseEvent(QKeyEvent* event)
 {
-    //if (event->key() == Qt::Key_QuoteLeft)
-    if (event->key() == Qt::Key_Escape)
-    {
-        if (event->modifiers() == Qt::KeyboardModifier::ShiftModifier)
-        {
-            HVisualDebugging::ToggleAllRepresentation();
-        }
-        else
-        {
-            HVisualDebugging::ToggleAll();
-        }
-    }
-    else if (event->key() == Qt::Key_F1)
-    {
-        if (nullptr != printingModel)
-        {
-            if (event->modifiers() == Qt::KeyboardModifier::ShiftModifier)
-            {
-                printingModel->ToggleInitialModelRepresentation();
-            }
-            else
-            {
-                printingModel->ToggleInitialModelVisibility();
-            }
-        }
-    }
-    else if (event->key() == Qt::Key_F2)
-    {
-        if (nullptr != printingModel)
-        {
-            if (event->modifiers() == Qt::KeyboardModifier::ShiftModifier)
-            {
-                printingModel->ToggleVolumeModelRepresentation();
-            }
-            else
-            {
-                printingModel->ToggleVolumeModelVisibility();
-            }
-        }
-    }
-    else if (event->key() == Qt::Key_F3)
-    {
-        if (nullptr != printingModel)
-        {
-            if (event->modifiers() == Qt::KeyboardModifier::ShiftModifier)
-            {
-                printingModel->ToggleOverhangModelRepresentation();
-            }
-            else
-            {
-                printingModel->ToggleOverhangModelVisibility();
-            }
-        }
-    }
-    else if (event->key() == Qt::Key_Space)
+    eventDispatcher.KeyReleaseEvent(event);
+
+   if (event->key() == Qt::Key_Space)
     {
         //HVector3 p0, p1, p2;
         //p0.x = static_cast<double>(rand()) / (static_cast<double>(RAND_MAX));
